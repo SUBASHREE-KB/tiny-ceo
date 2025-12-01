@@ -1,0 +1,7 @@
+[33m2025-11-30T07:21:36.544Z WARN [TinyCEO] No AI API key configured, using intelligent fallback mode[0m
+[32m2025-11-30T07:21:36.560Z SUCCESS [TinyCEO] Tiny CEO Backend Server Running![0m
+[34m2025-11-30T07:21:36.560Z INFO [TinyCEO] Environment: development[0m
+[34m2025-11-30T07:21:36.560Z INFO [TinyCEO] API: http://localhost:3001[0m
+[34m2025-11-30T07:21:36.560Z INFO [TinyCEO] Health Check: http://localhost:3001/health[0m
+[34m2025-11-30T07:21:36.561Z INFO [TinyCEO] Frontend should connect to: http://localhost:3001[0m
+

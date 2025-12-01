@@ -1,14 +1,15 @@
 // Team Sidebar Component
-import { 
-  Sparkles, 
-  TrendingUp, 
-  DollarSign, 
-  Users, 
-  Code, 
-  Target
+import {
+  Sparkles,
+  TrendingUp,
+  DollarSign,
+  Users,
+  Code,
+  Target,
+  ArrowLeft
 } from 'lucide-react';
 
-function TeamSidebar({ activeTeam, onSelectTeam }) {
+function TeamSidebar({ activeTeam, onSelectTeam, onBackToHome }) {
   const teams = [
     { id: 'overview', name: 'Overview', icon: Sparkles, color: 'from-purple-600 to-blue-600' },
     { id: 'marketing', name: 'Marketing', icon: TrendingUp, color: 'from-pink-600 to-rose-600' },
@@ -21,6 +22,15 @@ function TeamSidebar({ activeTeam, onSelectTeam }) {
   return (
     <div className="w-64 bg-[#0B0B0F] border-r border-gray-800 flex flex-col h-screen">
       <div className="p-4 border-b border-gray-800">
+        {onBackToHome && (
+          <button
+            onClick={onBackToHome}
+            className="mb-3 flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
+          >
+            <ArrowLeft size={16} />
+            <span className="text-sm">Back to Ideas</span>
+          </button>
+        )}
         <h2 className="text-xl font-bold text-white flex items-center gap-2">
           <Sparkles className="text-blue-500" size={24} />
           Tiny CEO

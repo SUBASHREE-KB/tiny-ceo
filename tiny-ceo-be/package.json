@@ -1,0 +1,28 @@
+{
+  "name": "tiny-ceo-be",
+  "version": "2.0.0",
+  "description": "Intelligent multi-agent startup analysis system - Backend API",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node src/server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "startup",
+    "ai",
+    "agents",
+    "analysis",
+    "saas"
+  ],
+  "author": "Tiny CEO",
+  "license": "ISC",
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "body-parser": "^2.2.1",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2"
+  }
+}

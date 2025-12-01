@@ -25,3 +25,9 @@ dist-ssr
 
 .env
 package-lock.json
+tiny-ceo-be/.env
+tiny-ceo-be/node_modules
+tiny-ceo-be/.env.example
+tiny-ceo-be/package-lock.json
+tiny-ceo-fe/.env
+tiny-ceo-be/package.json

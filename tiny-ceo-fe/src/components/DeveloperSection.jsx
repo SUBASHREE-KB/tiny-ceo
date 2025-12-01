@@ -1,46 +1,150 @@
-
-import { 
-  Sparkles, 
-  Code, 
+import { useState } from 'react';
+import {
+  Sparkles,
+  Code,
   FileText,
-  BarChart3
+  BarChart3,
+  RefreshCw,
+  AlertCircle,
+  Server,
+  MessageCircle
 } from 'lucide-react';
 import OutputCard from './OutputCard.jsx';
+import AgentChatPanel from './AgentChatPanel.jsx';
+
 // Developer Section
-function DeveloperSection() {
+function DeveloperSection({ data, onRegenerate, workspaceId }) {
+  const [showChat, setShowChat] = useState(false);
+  // Loading state
+  if (!data) {
+    return (
+      <div className="space-y-6">
+        <div className="bg-gradient-to-r from-blue-600/20 to-cyan-600/20 border border-blue-500/30 rounded-2xl p-6">
+          <div className="flex items-center gap-3 mb-2">
+            <Code className="text-blue-500" size={28} />
+            <h2 className="text-2xl font-bold text-white">Developer Team</h2>
+          </div>
+          <p className="text-gray-300">Technical architecture, feature roadmap, and development priorities.</p>
+        </div>
+        <div className="text-center py-12">
+          <RefreshCw className="animate-spin text-blue-500 mx-auto mb-4" size={48} />
+          <p className="text-gray-400 text-lg">Developer Agent is architecting your technical solution...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="bg-gradient-to-r from-blue-600/20 to-cyan-600/20 border border-blue-500/30 rounded-2xl p-6">
-        <div className="flex items-center gap-3 mb-2">
-          <Code className="text-blue-500" size={28} />
-          <h2 className="text-2xl font-bold text-white">Developer Team</h2>
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-3">
+            <Code className="text-blue-500" size={28} />
+            <h2 className="text-2xl font-bold text-white">Developer Team</h2>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setShowChat(!showChat)}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-all flex items-center gap-2"
+            >
+              <MessageCircle size={16} />
+              Chat with Developer
+            </button>
+            {onRegenerate && (
+              <button
+                onClick={onRegenerate}
+                className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-all flex items-center gap-2"
+              >
+                <RefreshCw size={16} />
+                Regenerate
+              </button>
+            )}
+          </div>
         </div>
         <p className="text-gray-300">Technical architecture, feature roadmap, and development priorities.</p>
       </div>
 
       <div className="grid gap-4">
-        <OutputCard
-          title="Tech Stack Recommendation"
-          content="Frontend: React + Tailwind (fast iteration). Backend: Node.js + Express (simple, scalable). Database: PostgreSQL (relational data) + Redis (caching). Hosting: Vultr (cost-effective). AI: LiquidMetal API for smart features. Auth: WorkOS. Payments: Stripe."
-          icon={Code}
-        />
-        <OutputCard
-          title="MVP Feature List"
-          content="Core: Project boards, task creation/assignment, comments, file uploads. Must-have: Real-time updates, mobile responsive, Slack integration. Nice-to-have: AI task suggestions, time tracking, calendar view. Ship in 6 weeks with core + 2 must-haves."
-          icon={FileText}
-        />
-        <OutputCard
-          title="Development Timeline"
-          content="Week 1-2: Auth + database setup. Week 3-4: Core task management UI. Week 5: Real-time features + Slack integration. Week 6: Polish, testing, deploy. Post-launch: 2-week sprints, prioritize based on user feedback. Maintain 80% uptime SLA minimum."
-          icon={BarChart3}
-        />
-        <OutputCard
-          title="AI Features Roadmap"
-          content="Phase 1 (Month 2): Smart task prioritization based on deadlines + dependencies. Phase 2 (Month 4): Auto-generate task descriptions from meeting notes. Phase 3 (Month 6): Predictive project timeline adjustments. Use LiquidMetal's SmartMemory for context."
-          icon={Sparkles}
-        />
+        {/* Tech Stack */}
+        {data.tech_stack && (
+          <OutputCard
+            title="Tech Stack Recommendation"
+            content={`FRONTEND: ${data.tech_stack.frontend?.primary || ''} + ${data.tech_stack.frontend?.framework || ''} + ${data.tech_stack.frontend?.styling || ''}\n${data.tech_stack.frontend?.reasoning || ''}\n\nBACKEND: ${data.tech_stack.backend?.runtime || ''} + ${data.tech_stack.backend?.framework || ''} + ${data.tech_stack.backend?.database || ''}\n${data.tech_stack.backend?.reasoning || ''}\n\nINFRASTRUCTURE: ${data.tech_stack.infrastructure?.hosting || ''} + ${data.tech_stack.infrastructure?.containers || ''}\n${data.tech_stack.infrastructure?.reasoning || ''}`}
+            icon={Code}
+          />
+        )}
+
+        {/* Architecture */}
+        {data.architecture && (
+          <OutputCard
+            title="System Architecture"
+            content={`Type: ${data.architecture.architecture_type || 'Modern Web Application'}\n\n${data.architecture.components?.map(c => `${c.component}: ${c.description}`).join('\n\n') || ''}\n\nData Flow: ${data.architecture.data_flow || 'Client -> API -> Database'}`}
+            icon={Server}
+          />
+        )}
+
+        {/* MVP Features */}
+        {data.mvp_features && (
+          <OutputCard
+            title="MVP Feature List"
+            content={`CORE FEATURES (Must Have):\n${data.mvp_features.core_features?.map(f => `- ${f.feature}: ${f.description}`).join('\n') || ''}\n\nNICE-TO-HAVE:\n${data.mvp_features.nice_to_have?.map(f => `- ${f.feature}: ${f.description}`).join('\n') || ''}\n\nPOST-MVP:\n${data.mvp_features.post_mvp?.slice(0, 3).map(f => `- ${f.feature}`).join('\n') || ''}`}
+            icon={FileText}
+          />
+        )}
+
+        {/* Timeline */}
+        {data.timeline && (
+          <OutputCard
+            title="Development Timeline"
+            content={`Total: ${data.timeline.total_estimate || '8-12 weeks'}\n\n${data.timeline.phases?.map(phase =>
+              `${phase.phase}: ${phase.duration}\nDeliverables: ${phase.deliverables?.join(', ') || ''}`
+            ).join('\n\n') || ''}\n\nMilestone: ${data.timeline.mvp_target || 'MVP in 8-12 weeks'}`}
+            icon={BarChart3}
+          />
+        )}
+
+        {/* Technical Risks */}
+        {data.technical_risks && data.technical_risks.length > 0 && (
+          <OutputCard
+            title="Technical Risks & Mitigation"
+            content={data.technical_risks.map(risk =>
+              `[${risk.severity}] ${risk.risk}\nMitigation: ${risk.mitigation}\nTimeline: ${risk.when_to_address}`
+            ).join('\n\n')}
+            icon={AlertCircle}
+          />
+        )}
+
+        {/* Scalability Plan */}
+        {data.scalability_plan && (
+          <OutputCard
+            title="Scalability Strategy"
+            content={`Initial: ${data.scalability_plan.initial_capacity || 'Support 1,000 users'}\n\nBottlenecks:\n${data.scalability_plan.bottlenecks?.map(b => `- ${b.area}: ${b.solution}`).join('\n') || ''}\n\nScaling Triggers:\n${data.scalability_plan.scaling_triggers?.map(t => `- ${t.metric}: ${t.action}`).join('\n') || ''}`}
+            icon={Sparkles}
+          />
+        )}
+
+        {/* Development Phases */}
+        {data.development_phases && data.development_phases.length > 0 && (
+          <OutputCard
+            title="Development Phases"
+            content={data.development_phases.map(phase =>
+              `${phase.phase} (${phase.timeline}):\n${phase.goals?.join('\n') || ''}\nSuccess: ${phase.completion_criteria || ''}`
+            ).join('\n\n')}
+            icon={BarChart3}
+          />
+        )}
       </div>
+
+      {/* Chat Panel */}
+      {showChat && (
+        <AgentChatPanel
+          agentType="developer"
+          workspaceId={workspaceId}
+          onClose={() => setShowChat(false)}
+        />
+      )}
     </div>
   );
 }
+
 export default DeveloperSection;

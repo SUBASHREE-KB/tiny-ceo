@@ -1,11 +1,35 @@
-import {  Check } from 'lucide-react';
+import { useState } from 'react';
+import { Check, MessageCircle, RefreshCw } from 'lucide-react';
 import OutputCard from './OutputCard.jsx';
+import AgentChatPanel from './AgentChatPanel.jsx';
+
 // Overview Section
-function OverviewSection({ ideaTitle }) {
+function OverviewSection({ ideaTitle, onRegenerate, workspaceId }) {
+  const [showChat, setShowChat] = useState(false);
   return (
     <div className="space-y-6">
       <div className="bg-gradient-to-r from-blue-600/20 to-purple-600/20 border border-blue-500/30 rounded-2xl p-8">
-        <h2 className="text-3xl font-bold text-white mb-2">{ideaTitle}</h2>
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-3xl font-bold text-white">{ideaTitle}</h2>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setShowChat(!showChat)}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-all flex items-center gap-2"
+            >
+              <MessageCircle size={16} />
+              Chat with Overview
+            </button>
+            {onRegenerate && (
+              <button
+                onClick={onRegenerate}
+                className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-all flex items-center gap-2"
+              >
+                <RefreshCw size={16} />
+                Regenerate
+              </button>
+            )}
+          </div>
+        </div>
         <p className="text-gray-300 mb-6">Your AI startup team has analyzed your idea and organized everything below.</p>
         
         <div className="grid grid-cols-3 gap-4 mt-6">
@@ -39,6 +63,15 @@ function OverviewSection({ ideaTitle }) {
           />
         </div>
       </div>
+
+      {/* Chat Panel */}
+      {showChat && (
+        <AgentChatPanel
+          agentType="overview"
+          workspaceId={workspaceId}
+          onClose={() => setShowChat(false)}
+        />
+      )}
     </div>
   );
 }

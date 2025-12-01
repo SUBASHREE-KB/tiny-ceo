@@ -1,17 +1,26 @@
-import React, { useState } from 'react';
-import { Send, Plus, Sparkles } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Send, Plus, Sparkles, LogOut } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { workspaceAPI, conversationAPI, agentAPI, authAPI } from '../utils/api';
 
 // IdeaSidebar Component
-function IdeaSidebar({ ideas, activeIdeaIndex, onSelectIdea, onNewIdea }) {
+function IdeaSidebar({ ideas, activeIdeaIndex, onSelectIdea, onNewIdea, onLogout }) {
   return (
     <div className="w-64 bg-[#0B0B0F] border-r border-gray-800 flex flex-col h-screen">
-      <div className="p-4 border-b border-gray-800">
+      <div className="p-4 border-b border-gray-800 space-y-2">
         <button
           onClick={onNewIdea}
           className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-lg transition-all shadow-lg shadow-blue-500/20"
         >
           <Plus size={20} />
           <span className="font-medium">New Idea</span>
+        </button>
+        <button
+          onClick={onLogout}
+          className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg transition-all"
+        >
+          <LogOut size={16} />
+          <span className="text-sm">Logout</span>
         </button>
       </div>
       
@@ -38,11 +47,11 @@ function IdeaSidebar({ ideas, activeIdeaIndex, onSelectIdea, onNewIdea }) {
 }
 
 // IdeaChat Component
-function IdeaChat({ idea, onSendMessage, onCreateSpace }) {
+function IdeaChat({ idea, onSendMessage, onCreateSpace, loading }) {
   const [input, setInput] = useState('');
 
   const handleSend = () => {
-    if (input.trim()) {
+    if (input.trim() && !loading) {
       onSendMessage(input);
       setInput('');
     }
@@ -129,10 +138,10 @@ function IdeaChat({ idea, onSendMessage, onCreateSpace }) {
           />
           <button
             onClick={handleSend}
-            disabled={!input.trim()}
+            disabled={!input.trim() || loading}
             className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 disabled:from-gray-700 disabled:to-gray-700 disabled:cursor-not-allowed text-white rounded-xl transition-all shadow-lg shadow-blue-500/20 disabled:shadow-none flex items-center gap-2"
           >
-            <Send size={20} />
+            {loading ? '...' : <Send size={20} />}
           </button>
         </div>
       </div>
@@ -142,67 +151,176 @@ function IdeaChat({ idea, onSendMessage, onCreateSpace }) {
 
 // Main IdeaPage Component
 function Home() {
-  const [ideas, setIdeas] = useState([
-    { title: 'New Idea', messages: [] }
-  ]);
-  const [activeIdeaIndex, setActiveIdeaIndex] = useState(0);
+  const navigate = useNavigate();
+  const [workspaces, setWorkspaces] = useState([]);
+  const [activeWorkspaceIndex, setActiveWorkspaceIndex] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const addNewIdea = () => {
-    const newIdea = { title: `New Idea ${ideas.length + 1}`, messages: [] };
-    setIdeas([...ideas, newIdea]);
-    setActiveIdeaIndex(ideas.length);
+  // Load workspaces on mount
+  useEffect(() => {
+    loadWorkspaces();
+  }, []);
+
+  const loadWorkspaces = async () => {
+    try {
+      const data = await workspaceAPI.getAll();
+      if (data.workspaces && data.workspaces.length > 0) {
+        // Transform workspaces to match UI format
+        const formattedWorkspaces = data.workspaces.map(ws => ({
+          id: ws.id,
+          title: ws.title,
+          messages: [] // Will load messages separately
+        }));
+        setWorkspaces(formattedWorkspaces);
+
+        // Load messages for first workspace
+        if (formattedWorkspaces[0].id) {
+          loadMessages(0, formattedWorkspaces[0].id);
+        }
+      } else {
+        // Create a default workspace if none exist
+        await addNewIdea();
+      }
+    } catch (err) {
+      console.error('Failed to load workspaces:', err);
+      // Create default workspace on error
+      setWorkspaces([{ title: 'New Idea', messages: [] }]);
+    }
   };
 
+  const loadMessages = async (index, workspaceId) => {
+    try {
+      const data = await conversationAPI.getMessages(workspaceId);
+      if (data.messages) {
+        const updatedWorkspaces = [...workspaces];
+        updatedWorkspaces[index].messages = data.messages.map(msg => ({
+          sender: msg.role === 'user' ? 'user' : 'ai',
+          text: msg.content
+        }));
+        setWorkspaces(updatedWorkspaces);
+      }
+    } catch (err) {
+      console.error('Failed to load messages:', err);
+    }
+  };
 
-  const updateMessages = (message) => {
-    const updatedIdeas = [...ideas];
-    const activeIdea = updatedIdeas[activeIdeaIndex];
-    
-    // Add user message
-    activeIdea.messages.push({
-      sender: 'user',
-      text: message
-    });
+  const addNewIdea = async () => {
+    try {
+      const data = await workspaceAPI.create(`New Idea ${workspaces.length + 1}`, '');
+      const newWorkspace = {
+        id: data.workspace.id,
+        title: data.workspace.title,
+        messages: []
+      };
+      setWorkspaces([...workspaces, newWorkspace]);
+      setActiveWorkspaceIndex(workspaces.length);
+    } catch (err) {
+      console.error('Failed to create workspace:', err);
+      setError('Failed to create new workspace');
+    }
+  };
 
-    // Update title based on first message
-    if (activeIdea.messages.length === 1) {
-      activeIdea.title = message.slice(0, 30) + (message.length > 30 ? '...' : '');
+  const updateMessages = async (message) => {
+    const activeWorkspace = workspaces[activeWorkspaceIndex];
+    if (!activeWorkspace.id) {
+      setError('Workspace not initialized');
+      return;
     }
 
-    // Add AI response
-    const aiResponses = [
-      "Tell me more about that! What makes this idea unique?",
-      "Interesting! Who would be your target customers?",
-      "Great insight! How do you plan to monetize this?",
-      "I love it! What's the biggest challenge you foresee?",
-      "Excellent! What resources would you need to get started?"
-    ];
-    
-    activeIdea.messages.push({
-      sender: 'ai',
-      text: aiResponses[Math.floor(Math.random() * aiResponses.length)]
-    });
+    setLoading(true);
+    setError('');
 
-    setIdeas(updatedIdeas);
+    try {
+      // Add user message optimistically
+      const updatedWorkspaces = [...workspaces];
+      updatedWorkspaces[activeWorkspaceIndex].messages.push({
+        sender: 'user',
+        text: message
+      });
+
+      // Update title based on first message
+      if (updatedWorkspaces[activeWorkspaceIndex].messages.length === 1) {
+        updatedWorkspaces[activeWorkspaceIndex].title = message.slice(0, 30) + (message.length > 30 ? '...' : '');
+      }
+
+      setWorkspaces(updatedWorkspaces);
+
+      // Send message to API
+      const data = await conversationAPI.sendMessage(activeWorkspace.id, message);
+
+      // Add AI response
+      if (data.response) {
+        updatedWorkspaces[activeWorkspaceIndex].messages.push({
+          sender: 'ai',
+          text: data.response
+        });
+        setWorkspaces([...updatedWorkspaces]);
+      }
+    } catch (err) {
+      console.error('Failed to send message:', err);
+      setError('Failed to send message');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleCreateSpace = () => {
-    alert('🚀 Creating your Startup Space! (This will connect to the next page)');
-    window.location.href = '/workspace';
+  const handleCreateSpace = async () => {
+    const activeWorkspace = workspaces[activeWorkspaceIndex];
+    if (!activeWorkspace.id) {
+      setError('Workspace not initialized');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Trigger agent generation
+      await agentAPI.generateAll(activeWorkspace.id);
+      // Navigate to workspace page
+      navigate(`/workspace/${activeWorkspace.id}`);
+    } catch (err) {
+      console.error('Failed to create workspace:', err);
+      setError('Failed to generate agent insights');
+      setLoading(false);
+    }
   };
+
+  const handleLogout = () => {
+    authAPI.logout();
+    navigate('/auth');
+  };
+
+  const handleSelectWorkspace = async (index) => {
+    setActiveWorkspaceIndex(index);
+    const workspace = workspaces[index];
+    if (workspace.id && workspace.messages.length === 0) {
+      await loadMessages(index, workspace.id);
+    }
+  };
+
+  if (workspaces.length === 0) {
+    return <div className="flex items-center justify-center h-screen bg-[#0B0B0F] text-white">Loading...</div>;
+  }
 
   return (
     <div className="flex h-screen bg-[#0B0B0F]">
+      {error && (
+        <div className="absolute top-4 right-4 p-4 bg-red-900/20 border border-red-500/30 rounded-lg text-red-400 z-50">
+          {error}
+        </div>
+      )}
       <IdeaSidebar
-        ideas={ideas}
-        activeIdeaIndex={activeIdeaIndex}
-        onSelectIdea={setActiveIdeaIndex}
+        ideas={workspaces}
+        activeIdeaIndex={activeWorkspaceIndex}
+        onSelectIdea={handleSelectWorkspace}
         onNewIdea={addNewIdea}
+        onLogout={handleLogout}
       />
       <IdeaChat
-        idea={ideas[activeIdeaIndex]}
+        idea={workspaces[activeWorkspaceIndex]}
         onSendMessage={updateMessages}
         onCreateSpace={handleCreateSpace}
+        loading={loading}
       />
     </div>
   );

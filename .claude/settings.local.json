@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__raindrop-mcp__get-prompt",
+      "mcp__raindrop-mcp__update-state"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
