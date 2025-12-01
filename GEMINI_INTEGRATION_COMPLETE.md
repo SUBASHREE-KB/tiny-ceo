@@ -207,11 +207,7 @@ cd tiny-ceo-be
 cat .env
 ```
 
-Should show:
-```
-AI_PROVIDER=gemini
-GEMINI_API_KEY=AIzaSyDJ3xq6Mc8eM3bm2rydoo2r8LB18vQFEkU
-```
+
 
 ### Issue: Backend won't start
 
