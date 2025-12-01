@@ -28,17 +28,7 @@ npm install dotenv
 - ✅ `src/server.js` - Added dotenv loading
 - ✅ `.env` - Created with your Gemini API key
 
-### 3. Configuration Added
 
-**File: `.env`**
-```env
-AI_PROVIDER=gemini
-GEMINI_API_KEY=AIzaSyDJ3xq6Mc8eM3bm2rydoo2r8LB18vQFEkU
-GEMINI_MODEL=gemini-pro
-PORT=3001
-JWT_SECRET=tiny-ceo-secret-key-change-in-production
-NODE_ENV=development
-```
 
 ---
 
