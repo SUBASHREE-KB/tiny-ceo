@@ -102,12 +102,13 @@ class OrchestratorService {
 
     try {
       let output;
+      const options = { regenerate: true }; // Flag to generate fresh content
 
       // Overview agent needs other agents' outputs
       if (agentType === 'overview') {
-        output = await this.agents.overview.analyze(conversationAnalysis, existingOutputs);
+        output = await this.agents.overview.analyze(conversationAnalysis, existingOutputs, options);
       } else {
-        output = await this.agents[agentType].analyze(conversationAnalysis);
+        output = await this.agents[agentType].analyze(conversationAnalysis, options);
       }
 
       logger.success(`${agentType} agent regenerated`);

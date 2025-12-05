@@ -6,15 +6,15 @@ import {
   BarChart3,
   Lightbulb,
   AlertTriangle,
-  RefreshCw,
   MessageCircle
 } from 'lucide-react';
 import OutputCard from './OutputCard.jsx';
 import AgentChatPanel from './AgentChatPanel.jsx';
 
 // CEO Strategy Section
-function CEOSection({ data, onRegenerate, workspaceId }) {
+function CEOSection({ data, workspaceId }) {
   const [showChat, setShowChat] = useState(false);
+
 
   // Loading state
   if (!data) {
@@ -48,24 +48,13 @@ function CEOSection({ data, onRegenerate, workspaceId }) {
             <Target className="text-indigo-500" size={28} />
             <h2 className="text-2xl font-bold text-white">CEO Strategy</h2>
           </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setShowChat(!showChat)}
-              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-all flex items-center gap-2"
-            >
-              <MessageCircle size={16} />
-              Chat with CEO
-            </button>
-            {onRegenerate && (
-              <button
-                onClick={onRegenerate}
-                className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-all flex items-center gap-2"
-              >
-                <RefreshCw size={16} />
-                Regenerate
-              </button>
-            )}
-          </div>
+          <button
+            onClick={() => setShowChat(!showChat)}
+            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-all flex items-center gap-2"
+          >
+            <MessageCircle size={16} />
+            Chat with CEO
+          </button>
         </div>
         <p className="text-gray-300">High-level strategy, competitive analysis, and growth planning.</p>
       </div>

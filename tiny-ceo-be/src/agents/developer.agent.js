@@ -22,7 +22,7 @@ class DeveloperAgent extends BaseAgent {
     );
   }
 
-  async analyze(conversationAnalysis) {
+  async analyze(conversationAnalysis, options = {}) {
     logger.agent('Developer', 'Starting technical analysis');
 
     const aiService = require('../services/ai.service');
@@ -76,7 +76,7 @@ class DeveloperAgent extends BaseAgent {
 
 Base your analysis on the actual startup product/solution described. Recommend specific technologies that fit THIS use case.`;
 
-      const insights = await aiService.generateAgentAnalysis('developer', conversationAnalysis, instructions);
+      const insights = await aiService.generateAgentAnalysis('developer', conversationAnalysis, instructions, options);
 
       if (insights.error) {
         logger.warn('Developer AI analysis failed, using template');

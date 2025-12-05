@@ -6,14 +6,14 @@ import {
   FileText,
   TrendingUp,
   MessageSquare,
-  RefreshCw,
   MessageCircle
 } from 'lucide-react';
 import OutputCard from './OutputCard.jsx';
 import AgentChatPanel from './AgentChatPanel.jsx';
 
-function SalesSection({ data, onRegenerate, workspaceId }) {
+function SalesSection({ data, workspaceId }) {
   const [showChat, setShowChat] = useState(false);
+
 
   // Loading state
   if (!data) {
@@ -27,7 +27,7 @@ function SalesSection({ data, onRegenerate, workspaceId }) {
           <p className="text-gray-300">Lead generation, outreach strategies, and customer acquisition.</p>
         </div>
         <div className="text-center py-12">
-          <RefreshCw className="animate-spin text-orange-500 mx-auto mb-4" size={48} />
+          <Users className="animate-spin text-orange-500 mx-auto mb-4" size={48} />
           <p className="text-gray-400 text-lg">Sales Agent is analyzing your customer acquisition strategy...</p>
         </div>
       </div>
@@ -47,24 +47,13 @@ function SalesSection({ data, onRegenerate, workspaceId }) {
             <Users className="text-orange-500" size={28} />
             <h2 className="text-2xl font-bold text-white">Sales Team</h2>
           </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setShowChat(!showChat)}
-              className="px-4 py-2 bg-orange-600 hover:bg-orange-500 text-white rounded-lg transition-all flex items-center gap-2"
-            >
-              <MessageCircle size={16} />
-              Chat with Sales
-            </button>
-            {onRegenerate && (
-              <button
-                onClick={onRegenerate}
-                className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-all flex items-center gap-2"
-              >
-                <RefreshCw size={16} />
-                Regenerate
-              </button>
-            )}
-          </div>
+          <button
+            onClick={() => setShowChat(!showChat)}
+            className="px-4 py-2 bg-orange-600 hover:bg-orange-500 text-white rounded-lg transition-all flex items-center gap-2"
+          >
+            <MessageCircle size={16} />
+            Chat with Sales
+          </button>
         </div>
         <p className="text-gray-300">Lead generation, outreach strategies, and customer acquisition.</p>
       </div>

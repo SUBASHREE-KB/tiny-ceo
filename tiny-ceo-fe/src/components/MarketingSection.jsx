@@ -5,7 +5,6 @@ import {
   MessageSquare,
   FileText,
   Mail,
-  RefreshCw,
   Megaphone,
   Globe,
   MessageCircle
@@ -14,8 +13,10 @@ import OutputCard from './OutputCard.jsx';
 import AgentChatPanel from './AgentChatPanel.jsx';
 
 // Marketing Section
-function MarketingSection({ data, onRegenerate, workspaceId }) {
+function MarketingSection({ data, workspaceId }) {
   const [showChat, setShowChat] = useState(false);
+
+
   // Loading state
   if (!data) {
     return (
@@ -28,7 +29,7 @@ function MarketingSection({ data, onRegenerate, workspaceId }) {
           <p className="text-gray-300">All your marketing materials, copy, and campaign strategies.</p>
         </div>
         <div className="text-center py-12">
-          <RefreshCw className="animate-spin text-pink-500 mx-auto mb-4" size={48} />
+          <TrendingUp className="animate-spin text-pink-500 mx-auto mb-4" size={48} />
           <p className="text-gray-400 text-lg">Marketing Agent is crafting your go-to-market strategy...</p>
         </div>
       </div>
@@ -43,24 +44,13 @@ function MarketingSection({ data, onRegenerate, workspaceId }) {
             <TrendingUp className="text-pink-500" size={28} />
             <h2 className="text-2xl font-bold text-white">Marketing Team</h2>
           </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setShowChat(!showChat)}
-              className="px-4 py-2 bg-pink-600 hover:bg-pink-500 text-white rounded-lg transition-all flex items-center gap-2"
-            >
-              <MessageCircle size={16} />
-              Chat with Marketing
-            </button>
-            {onRegenerate && (
-              <button
-                onClick={onRegenerate}
-                className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-all flex items-center gap-2"
-              >
-                <RefreshCw size={16} />
-                Regenerate
-              </button>
-            )}
-          </div>
+          <button
+            onClick={() => setShowChat(!showChat)}
+            className="px-4 py-2 bg-pink-600 hover:bg-pink-500 text-white rounded-lg transition-all flex items-center gap-2"
+          >
+            <MessageCircle size={16} />
+            Chat with Marketing
+          </button>
         </div>
         <p className="text-gray-300">All your marketing materials, copy, and campaign strategies.</p>
       </div>

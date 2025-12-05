@@ -21,7 +21,7 @@ class CEOAgent extends BaseAgent {
     );
   }
 
-  async analyze(conversationAnalysis) {
+  async analyze(conversationAnalysis, options = {}) {
     logger.agent('CEO', 'Starting strategic analysis');
 
     const aiService = require('../services/ai.service');
@@ -91,7 +91,7 @@ class CEOAgent extends BaseAgent {
 
 Base your analysis on the actual startup idea, industry, problem, and solution provided in the conversation. Provide specific, actionable insights tailored to THIS startup, not generic advice.`;
 
-      const insights = await aiService.generateAgentAnalysis('ceo', conversationAnalysis, instructions);
+      const insights = await aiService.generateAgentAnalysis('ceo', conversationAnalysis, instructions, options);
 
       // Fallback to template if AI fails
       if (insights.error) {

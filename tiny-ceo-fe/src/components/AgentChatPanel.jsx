@@ -81,40 +81,44 @@ function AgentChatPanel({ agentType, workspaceId, onClose }) {
 
   if (isMinimized) {
     return (
-      <div className="fixed bottom-4 right-4 bg-gray-900 border border-gray-700 rounded-lg shadow-2xl p-4 cursor-pointer hover:bg-gray-800 transition-all"
+      <div className="fixed bottom-4 right-4 bg-gray-900 border border-gray-700 rounded-lg shadow-2xl p-3 cursor-pointer hover:bg-gray-800 transition-all z-50"
            onClick={() => setIsMinimized(false)}>
         <div className="flex items-center gap-2">
-          <MessageCircle className={`text-${color}-500`} size={20} />
-          <span className="text-white font-medium">{agentNames[agentType]} Agent</span>
-          <span className="text-gray-400 text-sm ml-2">{messages.length} messages</span>
+          <MessageCircle className={`text-${color}-500`} size={18} />
+          <span className="text-white font-medium text-sm">{agentNames[agentType]}</span>
+          {messages.length > 0 && (
+            <span className="text-gray-400 text-xs ml-1">({messages.length})</span>
+          )}
         </div>
       </div>
     );
   }
 
   return (
-    <div className="fixed bottom-4 right-4 w-96 h-[600px] bg-gray-900 border border-gray-700 rounded-lg shadow-2xl flex flex-col z-50">
+    <div className="fixed inset-x-0 bottom-0 sm:inset-auto sm:bottom-4 sm:right-4 sm:w-96 sm:max-w-md h-[80vh] sm:h-[600px] sm:max-h-[85vh] bg-gray-900 border-t sm:border border-gray-700 sm:rounded-lg shadow-2xl flex flex-col z-50">
       {/* Header */}
-      <div className={`p-4 border-b border-gray-700 flex items-center justify-between bg-${color}-600/10`}>
-        <div className="flex items-center gap-2">
-          <MessageCircle className={`text-${color}-500`} size={20} />
-          <div>
-            <h3 className="text-white font-semibold">{agentNames[agentType]} Agent</h3>
-            <p className="text-gray-400 text-xs">Ask me anything about this section</p>
+      <div className={`p-3 sm:p-4 border-b border-gray-700 flex items-center justify-between bg-${color}-600/10 flex-shrink-0`}>
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          <MessageCircle className={`text-${color}-500 flex-shrink-0`} size={20} />
+          <div className="min-w-0">
+            <h3 className="text-white font-semibold text-sm sm:text-base truncate">{agentNames[agentType]} Agent</h3>
+            <p className="text-gray-400 text-xs hidden sm:block">Ask me anything</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
           <button
             onClick={() => setIsMinimized(true)}
-            className="text-gray-400 hover:text-white transition-colors"
+            className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-all"
             title="Minimize"
+            aria-label="Minimize chat"
           >
             <Minimize2 size={18} />
           </button>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-white transition-colors"
+            className="p-2 text-gray-400 hover:text-white hover:bg-red-900/20 rounded-lg transition-all"
             title="Close"
+            aria-label="Close chat"
           >
             <X size={20} />
           </button>
@@ -122,12 +126,12 @@ function AgentChatPanel({ agentType, workspaceId, onClose }) {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-4 overscroll-contain">
         {messages.length === 0 && (
-          <div className="text-center text-gray-400 mt-8">
-            <MessageCircle size={48} className={`text-${color}-500/30 mx-auto mb-4`} />
-            <p className="text-sm">Start a conversation with the {agentNames[agentType]} Agent</p>
-            <p className="text-xs mt-2 text-gray-500">Ask questions about recommendations, strategies, or get clarifications</p>
+          <div className="text-center text-gray-400 mt-8 px-4">
+            <MessageCircle size={40} className={`text-${color}-500/30 mx-auto mb-3`} />
+            <p className="text-sm sm:text-base">Start a conversation with the {agentNames[agentType]} Agent</p>
+            <p className="text-xs mt-2 text-gray-500">Ask questions about this section</p>
           </div>
         )}
 
@@ -137,13 +141,13 @@ function AgentChatPanel({ agentType, workspaceId, onClose }) {
             className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
           >
             <div
-              className={`max-w-[80%] px-4 py-2 rounded-lg ${
+              className={`max-w-[85%] sm:max-w-[80%] px-3 sm:px-4 py-2 rounded-lg ${
                 msg.role === 'user'
                   ? `bg-${color}-600 text-white`
                   : 'bg-gray-800 text-gray-200'
               }`}
             >
-              <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+              <p className="text-xs sm:text-sm whitespace-pre-wrap break-words">{msg.content}</p>
             </div>
           </div>
         ))}
@@ -167,7 +171,7 @@ function AgentChatPanel({ agentType, workspaceId, onClose }) {
       </div>
 
       {/* Input */}
-      <div className="p-4 border-t border-gray-700">
+      <div className="p-3 sm:p-4 border-t border-gray-700 flex-shrink-0 bg-[#0B0B0F]">
         <div className="flex gap-2">
           <input
             type="text"
@@ -176,17 +180,18 @@ function AgentChatPanel({ agentType, workspaceId, onClose }) {
             onKeyPress={handleKeyPress}
             placeholder="Ask me anything..."
             disabled={loading}
-            className="flex-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-${color}-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="flex-1 px-3 sm:px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white text-sm placeholder-gray-500 focus:outline-none focus:border-${color}-500 focus:ring-2 focus:ring-${color}-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
           />
           <button
             onClick={sendMessage}
             disabled={loading || !input.trim()}
-            className={`px-4 py-2 bg-${color}-600 hover:bg-${color}-500 disabled:bg-gray-700 disabled:cursor-not-allowed text-white rounded-lg transition-all flex items-center gap-2`}
+            className={`px-3 sm:px-4 py-2 bg-${color}-600 hover:bg-${color}-500 disabled:bg-gray-700 disabled:cursor-not-allowed text-white rounded-lg transition-all flex items-center justify-center flex-shrink-0`}
+            aria-label="Send message"
           >
             <Send size={18} />
           </button>
         </div>
-        <p className="text-xs text-gray-500 mt-2">Press Enter to send, Shift+Enter for new line</p>
+        <p className="text-xs text-gray-500 mt-2 hidden sm:block">Press Enter to send</p>
       </div>
     </div>
   );

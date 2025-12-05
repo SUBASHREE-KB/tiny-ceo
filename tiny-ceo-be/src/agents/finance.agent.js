@@ -21,7 +21,7 @@ class FinanceAgent extends BaseAgent {
     );
   }
 
-  async analyze(conversationAnalysis) {
+  async analyze(conversationAnalysis, options = {}) {
     logger.agent('Finance', 'Starting financial analysis');
 
     const aiService = require('../services/ai.service');
@@ -82,7 +82,7 @@ class FinanceAgent extends BaseAgent {
 
 Base your analysis on the actual business model and target market. Provide realistic financial projections tailored to THIS startup.`;
 
-      const insights = await aiService.generateAgentAnalysis('finance', conversationAnalysis, instructions);
+      const insights = await aiService.generateAgentAnalysis('finance', conversationAnalysis, instructions, options);
 
       if (insights.error) {
         logger.warn('Finance AI analysis failed, using template');

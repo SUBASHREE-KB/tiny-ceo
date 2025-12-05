@@ -1,12 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { Send, Plus, Sparkles, LogOut } from 'lucide-react';
+import { Send, Plus, Sparkles, LogOut, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { workspaceAPI, conversationAPI, agentAPI, authAPI } from '../utils/api';
+import { workspaceAPI, conversationAPI, agentAPI, authAPI, getUserInfo } from '../utils/api';
 
 // IdeaSidebar Component
-function IdeaSidebar({ ideas, activeIdeaIndex, onSelectIdea, onNewIdea, onLogout }) {
+function IdeaSidebar({ ideas, activeIdeaIndex, onSelectIdea, onNewIdea, onLogout, userEmail }) {
   return (
     <div className="w-64 bg-[#0B0B0F] border-r border-gray-800 flex flex-col h-screen">
+      {/* User Info Header */}
+      <div className="p-4 border-b border-gray-800">
+        <div className="flex items-center gap-2 mb-3 p-2 bg-gray-800/50 rounded-lg">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center flex-shrink-0">
+            <User size={16} className="text-white" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-white text-sm font-medium truncate">{userEmail || 'User'}</p>
+            <p className="text-gray-500 text-xs">Logged in</p>
+          </div>
+        </div>
+      </div>
+
       <div className="p-4 border-b border-gray-800 space-y-2">
         <button
           onClick={onNewIdea}
@@ -157,9 +170,14 @@ function Home() {
   const [activeWorkspaceIndex, setActiveWorkspaceIndex] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [userEmail, setUserEmail] = useState('');
 
-  // Load workspaces on mount
+  // Load workspaces and user info on mount
   useEffect(() => {
+    const user = getUserInfo();
+    if (user && user.email) {
+      setUserEmail(user.email);
+    }
     loadWorkspaces();
   }, []);
 
@@ -242,7 +260,15 @@ function Home() {
 
       // Update title based on first message
       if (updatedWorkspaces[activeWorkspaceIndex].messages.length === 1) {
-        updatedWorkspaces[activeWorkspaceIndex].title = message.slice(0, 30) + (message.length > 30 ? '...' : '');
+        const newTitle = message.length > 50 ? message.substring(0, 50) + '...' : message;
+        updatedWorkspaces[activeWorkspaceIndex].title = newTitle;
+
+        // Persist title to backend
+        try {
+          await workspaceAPI.update(activeWorkspace.id, { title: newTitle });
+        } catch (err) {
+          console.error('Failed to update workspace title:', err);
+        }
       }
 
       setWorkspaces(updatedWorkspaces);
@@ -316,6 +342,7 @@ function Home() {
         onSelectIdea={handleSelectWorkspace}
         onNewIdea={addNewIdea}
         onLogout={handleLogout}
+        userEmail={userEmail}
       />
       <IdeaChat
         idea={workspaces[activeWorkspaceIndex]}

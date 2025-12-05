@@ -10,9 +10,21 @@ export const setAuthToken = (token) => {
   localStorage.setItem('token', token);
 };
 
-// Remove auth token from localStorage
+// Set user info to localStorage
+export const setUserInfo = (user) => {
+  localStorage.setItem('user', JSON.stringify(user));
+};
+
+// Get user info from localStorage
+export const getUserInfo = () => {
+  const user = localStorage.getItem('user');
+  return user ? JSON.parse(user) : null;
+};
+
+// Remove auth token and user info from localStorage
 export const removeAuthToken = () => {
   localStorage.removeItem('token');
+  localStorage.removeItem('user');
 };
 
 // Generic API request function
@@ -58,6 +70,9 @@ export const authAPI = {
     if (response.token) {
       setAuthToken(response.token);
     }
+    if (response.user) {
+      setUserInfo(response.user);
+    }
     return response;
   },
 
@@ -68,6 +83,9 @@ export const authAPI = {
     });
     if (response.token) {
       setAuthToken(response.token);
+    }
+    if (response.user) {
+      setUserInfo(response.user);
     }
     return response;
   },
@@ -95,6 +113,13 @@ export const workspaceAPI = {
     return await apiRequest('/workspaces', {
       method: 'POST',
       body: JSON.stringify({ title, startup_idea_text: startupIdeaText }),
+    });
+  },
+
+  update: async (workspaceId, updates) => {
+    return await apiRequest(`/workspaces/${workspaceId}`, {
+      method: 'PUT',
+      body: JSON.stringify(updates),
     });
   },
 };

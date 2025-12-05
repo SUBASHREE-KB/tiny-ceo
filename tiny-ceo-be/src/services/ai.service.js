@@ -296,18 +296,25 @@ class AIService {
   /**
    * Generate agent analysis using AI
    */
-  async generateAgentAnalysis(agentType, conversationAnalysis, instructions) {
+  async generateAgentAnalysis(agentType, conversationAnalysis, instructions, options = {}) {
     const systemPrompt = SYSTEM_PROMPTS[agentType] || `You are a ${agentType} advisor for startups.`;
+
+    // Add variation for regenerate
+    const variationHint = options.regenerate ? `
+
+REGENERATION REQUEST: Provide a FRESH, ALTERNATIVE perspective with different insights. Do not repeat the same advice. Focus on different aspects, alternative strategies, or deeper insights that weren't covered before. Be creative and provide NEW value.` : '';
 
     const prompt = `Based on the following startup conversation analysis, provide detailed insights:
 
 ${JSON.stringify(conversationAnalysis, null, 2)}
 
-${instructions}
+${instructions}${variationHint}
 
 IMPORTANT: Respond with a valid JSON object only. Do not include any markdown formatting or code blocks. Just the raw JSON.`;
 
-    const response = await this.generateCompletion(prompt, systemPrompt);
+    const response = await this.generateCompletion(prompt, systemPrompt, {
+      temperature: options.regenerate ? 0.9 : 0.7  // Higher temperature for more creative regeneration
+    });
 
     // Try to parse JSON from response
     try {

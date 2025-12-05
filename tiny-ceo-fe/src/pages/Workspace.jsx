@@ -50,19 +50,6 @@ function Workspace() {
     }
   };
 
-  const handleRegenerateAgent = async (agentType) => {
-    try {
-      const data = await agentAPI.regenerate(workspaceId, agentType);
-      setAgentOutputs({
-        ...agentOutputs,
-        [agentType]: data.output
-      });
-    } catch (err) {
-      console.error('Failed to regenerate agent:', err);
-      setError(`Failed to regenerate ${agentType} agent`);
-    }
-  };
-
   const ideaTitle = workspace?.title || "Loading...";
 
   const renderContent = () => {
@@ -72,33 +59,33 @@ function Workspace() {
 
     switch (activeTeam) {
       case 'overview':
-        return <OverviewSection ideaTitle={ideaTitle} data={agentOutputs.overview} onRegenerate={() => handleRegenerateAgent('overview')} workspaceId={workspaceId} />;
+        return <OverviewSection ideaTitle={ideaTitle} data={agentOutputs.overview} workspaceId={workspaceId} />;
       case 'marketing':
-        return <MarketingSection data={agentOutputs.marketing} onRegenerate={() => handleRegenerateAgent('marketing')} workspaceId={workspaceId} />;
+        return <MarketingSection data={agentOutputs.marketing} workspaceId={workspaceId} />;
       case 'finance':
-        return <FinanceSection data={agentOutputs.finance} onRegenerate={() => handleRegenerateAgent('finance')} workspaceId={workspaceId} />;
+        return <FinanceSection data={agentOutputs.finance} workspaceId={workspaceId} />;
       case 'sales':
-        return <SalesSection data={agentOutputs.sales} onRegenerate={() => handleRegenerateAgent('sales')} workspaceId={workspaceId} />;
+        return <SalesSection data={agentOutputs.sales} workspaceId={workspaceId} />;
       case 'ceo':
-        return <CEOSection data={agentOutputs.ceo} onRegenerate={() => handleRegenerateAgent('ceo')} workspaceId={workspaceId} />;
+        return <CEOSection data={agentOutputs.ceo} workspaceId={workspaceId} />;
       case 'developer':
-        return <DeveloperSection data={agentOutputs.developer} onRegenerate={() => handleRegenerateAgent('developer')} workspaceId={workspaceId} />;
+        return <DeveloperSection data={agentOutputs.developer} workspaceId={workspaceId} />;
       default:
-        return <OverviewSection ideaTitle={ideaTitle} data={agentOutputs.overview} onRegenerate={() => handleRegenerateAgent('overview')} workspaceId={workspaceId} />;
+        return <OverviewSection ideaTitle={ideaTitle} data={agentOutputs.overview} workspaceId={workspaceId} />;
     }
   };
 
   return (
-    <div className="flex h-screen bg-[#0B0B0F]">
+    <div className="flex h-screen bg-[#0B0B0F] overflow-hidden">
       {error && (
-        <div className="absolute top-4 right-4 p-4 bg-red-900/20 border border-red-500/30 rounded-lg text-red-400 z-50">
+        <div className="absolute top-4 right-4 p-4 bg-red-900/20 border border-red-500/30 rounded-lg text-red-400 z-50 max-w-sm mx-4">
           {error}
         </div>
       )}
       <TeamSidebar activeTeam={activeTeam} onSelectTeam={setActiveTeam} onBackToHome={() => navigate('/')} />
 
-      <div className="flex-1 overflow-y-auto">
-        <div className="max-w-6xl mx-auto p-8">
+      <div className="flex-1 overflow-y-auto w-full lg:w-auto">
+        <div className="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 pt-16 lg:pt-8">
           {renderContent()}
         </div>
       </div>

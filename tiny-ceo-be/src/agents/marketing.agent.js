@@ -21,7 +21,7 @@ class MarketingAgent extends BaseAgent {
     );
   }
 
-  async analyze(conversationAnalysis) {
+  async analyze(conversationAnalysis, options = {}) {
     logger.agent('Marketing', 'Starting marketing analysis');
 
     const aiService = require('../services/ai.service');
@@ -73,7 +73,7 @@ class MarketingAgent extends BaseAgent {
 
 Base your analysis on the actual product, target market, and competitive landscape. Provide specific marketing strategies for THIS startup.`;
 
-      const insights = await aiService.generateAgentAnalysis('marketing', conversationAnalysis, instructions);
+      const insights = await aiService.generateAgentAnalysis('marketing', conversationAnalysis, instructions, options);
 
       if (insights.error) {
         logger.warn('Marketing AI analysis failed, using template');

@@ -1,4 +1,5 @@
 // Team Sidebar Component
+import { useState } from 'react';
 import {
   Sparkles,
   TrendingUp,
@@ -6,10 +7,14 @@ import {
   Users,
   Code,
   Target,
-  ArrowLeft
+  ArrowLeft,
+  Menu,
+  X
 } from 'lucide-react';
 
 function TeamSidebar({ activeTeam, onSelectTeam, onBackToHome }) {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
   const teams = [
     { id: 'overview', name: 'Overview', icon: Sparkles, color: 'from-purple-600 to-blue-600' },
     { id: 'marketing', name: 'Marketing', icon: TrendingUp, color: 'from-pink-600 to-rose-600' },
@@ -19,8 +24,29 @@ function TeamSidebar({ activeTeam, onSelectTeam, onBackToHome }) {
     { id: 'developer', name: 'Developer', icon: Code, color: 'from-blue-600 to-cyan-600' }
   ];
 
+  const handleTeamSelect = (teamId) => {
+    onSelectTeam(teamId);
+    setIsMobileMenuOpen(false);
+  };
+
   return (
-    <div className="w-64 bg-[#0B0B0F] border-r border-gray-800 flex flex-col h-screen">
+    <>
+      {/* Mobile Menu Button */}
+      <button
+        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-gray-800 rounded-lg text-white"
+      >
+        {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+      </button>
+
+      {/* Sidebar */}
+      <div className={`
+        fixed lg:relative
+        w-64 bg-[#0B0B0F] border-r border-gray-800
+        flex flex-col h-screen z-40
+        transform transition-transform duration-300 ease-in-out
+        ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+      `}>
       <div className="p-4 border-b border-gray-800">
         {onBackToHome && (
           <button
@@ -46,7 +72,7 @@ function TeamSidebar({ activeTeam, onSelectTeam, onBackToHome }) {
           return (
             <button
               key={team.id}
-              onClick={() => onSelectTeam(team.id)}
+              onClick={() => handleTeamSelect(team.id)}
               className={`w-full text-left px-4 py-3 rounded-lg mb-2 transition-all flex items-center gap-3 ${
                 isActive
                   ? `bg-gradient-to-r ${team.color} bg-opacity-20 border border-opacity-30 shadow-md`
@@ -62,6 +88,15 @@ function TeamSidebar({ activeTeam, onSelectTeam, onBackToHome }) {
         })}
       </div>
     </div>
+
+      {/* Mobile Overlay */}
+      {isMobileMenuOpen && (
+        <div
+          className="lg:hidden fixed inset-0 bg-black/50 z-30"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+    </>
   );
 }
 export default TeamSidebar;

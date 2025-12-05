@@ -21,66 +21,103 @@ class OverviewAgent extends BaseAgent {
     );
   }
 
-  async analyze(conversationAnalysis, agentOutputs = {}) {
+  async analyze(conversationAnalysis, agentOutputs = {}, options = {}) {
     logger.agent('Overview', 'Starting overview synthesis');
 
     const aiService = require('../services/ai.service');
 
     try {
-      const instructions = `You are synthesizing insights from multiple specialized business agents. Generate a comprehensive executive overview with the following JSON structure:
+      const instructions = `You are the Chief Strategy Officer synthesizing insights from your entire leadership team (CEO, Finance, Marketing, Sales, Developer).
+
+ANALYZE ALL TEAM INSIGHTS DEEPLY:
+${Object.keys(agentOutputs).length > 0 ? `
+Available Team Insights:
+${Object.entries(agentOutputs).map(([team, data]) => `
+${team.toUpperCase()} TEAM:
+${JSON.stringify(data, null, 2)}
+`).join('\n')}
+` : ''}
+
+Generate a comprehensive executive overview with this EXACT JSON structure:
 {
-  "executive_summary": "string (2-3 paragraph high-level summary of the entire startup opportunity, viability, and recommendations)",
-  "key_strengths": ["string (top 3-5 strengths identified across all agents)"],
-  "key_challenges": ["string (top 3-5 challenges/risks identified)"],
-  "opportunity_score": {
-    "overall_score": number (1-10, where 10 is highest opportunity),
-    "market_score": number (1-10),
-    "execution_score": number (1-10),
-    "financial_score": number (1-10),
-    "team_score": number (1-10),
-    "reasoning": "string (explanation of scores)"
+  "executive_summary": {
+    "one_sentence_pitch": "string (elevator pitch combining problem, solution, target market)",
+    "opportunity_overview": "string (2-3 sentences on market opportunity, business model, and growth potential)",
+    "market_context": {
+      "industry": "string",
+      "market_size": "string (TAM from marketing team)",
+      "growth_rate": "string",
+      "competitive_position": "string (from CEO competitive analysis)"
+    },
+    "business_model": {
+      "revenue_model": "string (from finance team pricing)",
+      "primary_tier": "string (most popular tier from finance)",
+      "distribution": "string (GTM from marketing/sales)",
+      "gross_margin": "string"
+    },
+    "financial_highlights": {
+      "year_1_arr": "string (from finance projections)",
+      "year_3_arr": "string (from finance projections)",
+      "unit_economics": "string (LTV:CAC from finance)",
+      "breakeven": "string (timeline from finance)",
+      "funding_need": "string (from finance budget)"
+    },
+    "key_strengths": ["string (5-7 strengths from ALL teams)"],
+    "key_challenges": ["string (5-7 challenges from ALL teams)"]
   },
-  "immediate_next_steps": [
+  "next_steps": [
     {
-      "step": "string (specific action)",
-      "priority": "P0|P1|P2",
-      "owner": "string (CEO/CTO/CMO/etc.)",
-      "timeline": "string (when to complete)",
-      "why": "string (why this is important)"
+      "step": "string (specific, actionable task)",
+      "priority": "High|Medium|Low",
+      "owner": "CEO|CTO|CFO|CMO|Sales Lead",
+      "timeline": "This week|This month|Next quarter",
+      "why": "string (business impact - reference specific team insights)",
+      "dependencies": ["string (what needs to happen first)"]
     }
   ],
-  "quick_wins": [
+  "key_risks": [
     {
-      "win": "string",
-      "effort": "Low|Medium|High",
-      "impact": "Low|Medium|High",
-      "timeline": "string"
-    }
-  ],
-  "critical_risks": [
-    {
-      "risk": "string",
+      "risk": "string (specific risk from team analysis)",
       "severity": "Critical|High|Medium|Low",
-      "mitigation": "string"
+      "source_team": "string (which team identified this)",
+      "mitigation": "string (concrete mitigation strategy)",
+      "when_to_address": "Immediate|Short-term|Monitor"
     }
   ],
-  "go_no_go_recommendation": {
-    "recommendation": "Strong Go|Go|Proceed with Caution|No Go",
-    "confidence": "string (percentage)",
-    "reasoning": "string (detailed explanation)"
-  }
+  "success_metrics": [
+    {
+      "metric": "string (KPI name)",
+      "target": "string (specific target value)",
+      "timeframe": "string (when to achieve)",
+      "source": "string (which team defined this)"
+    }
+  ]
 }
 
-Context:
-- Conversation Analysis: ${JSON.stringify(conversationAnalysis, null, 2)}
-- Agent Insights Available: ${Object.keys(agentOutputs).join(', ')}
+CRITICAL REQUIREMENTS:
+1. NEXT STEPS must be 8-12 specific actions synthesized from:
+   - Developer team's MVP features and timeline
+   - Finance team's budget and funding needs
+   - Marketing team's GTM strategy and channels
+   - Sales team's lead gen and ICP validation
+   - CEO team's competitive positioning
 
-Synthesize all available information to provide an executive-level strategic overview. Be specific and reference actual insights from the agents when available.`;
+2. Each next step MUST reference actual insights from the teams (e.g., "Based on Developer's 10-week timeline...")
+
+3. KEY RISKS must combine risks from ALL teams (technical, market, financial, GTM)
+
+4. EXECUTIVE SUMMARY must use actual data from teams (real pricing tiers, real tech stack, real market size)
+
+5. Be specific with numbers, timelines, and concrete actions - not generic advice
+
+Conversation Context: ${JSON.stringify(conversationAnalysis, null, 2)}
+
+Now synthesize this into actionable strategic guidance.`;
 
       const insights = await aiService.generateAgentAnalysis('overview', {
         ...conversationAnalysis,
         agentOutputs
-      }, instructions);
+      }, instructions, options);
 
       if (insights.error) {
         logger.warn('Overview AI analysis failed, using template');

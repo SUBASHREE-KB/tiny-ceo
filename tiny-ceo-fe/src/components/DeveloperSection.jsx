@@ -4,7 +4,6 @@ import {
   Code,
   FileText,
   BarChart3,
-  RefreshCw,
   AlertCircle,
   Server,
   MessageCircle
@@ -13,8 +12,10 @@ import OutputCard from './OutputCard.jsx';
 import AgentChatPanel from './AgentChatPanel.jsx';
 
 // Developer Section
-function DeveloperSection({ data, onRegenerate, workspaceId }) {
+function DeveloperSection({ data, workspaceId }) {
   const [showChat, setShowChat] = useState(false);
+
+
   // Loading state
   if (!data) {
     return (
@@ -27,7 +28,7 @@ function DeveloperSection({ data, onRegenerate, workspaceId }) {
           <p className="text-gray-300">Technical architecture, feature roadmap, and development priorities.</p>
         </div>
         <div className="text-center py-12">
-          <RefreshCw className="animate-spin text-blue-500 mx-auto mb-4" size={48} />
+          <Code className="animate-spin text-blue-500 mx-auto mb-4" size={48} />
           <p className="text-gray-400 text-lg">Developer Agent is architecting your technical solution...</p>
         </div>
       </div>
@@ -42,24 +43,13 @@ function DeveloperSection({ data, onRegenerate, workspaceId }) {
             <Code className="text-blue-500" size={28} />
             <h2 className="text-2xl font-bold text-white">Developer Team</h2>
           </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setShowChat(!showChat)}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-all flex items-center gap-2"
-            >
-              <MessageCircle size={16} />
-              Chat with Developer
-            </button>
-            {onRegenerate && (
-              <button
-                onClick={onRegenerate}
-                className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-all flex items-center gap-2"
-              >
-                <RefreshCw size={16} />
-                Regenerate
-              </button>
-            )}
-          </div>
+          <button
+            onClick={() => setShowChat(!showChat)}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-all flex items-center gap-2"
+          >
+            <MessageCircle size={16} />
+            Chat with Developer
+          </button>
         </div>
         <p className="text-gray-300">Technical architecture, feature roadmap, and development priorities.</p>
       </div>

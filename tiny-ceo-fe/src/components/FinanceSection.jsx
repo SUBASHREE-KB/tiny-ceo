@@ -3,7 +3,6 @@ import {
   DollarSign,
   FileText,
   BarChart3,
-  RefreshCw,
   TrendingUp,
   PieChart,
   MessageCircle
@@ -12,8 +11,9 @@ import OutputCard from './OutputCard.jsx';
 import AgentChatPanel from './AgentChatPanel.jsx';
 
 // Finance Section
-function FinanceSection({ data, onRegenerate, workspaceId }) {
+function FinanceSection({ data, workspaceId }) {
   const [showChat, setShowChat] = useState(false);
+
 
   // Safe helper to render content
   const safeRender = (value, fallback = 'N/A') => {
@@ -32,7 +32,7 @@ function FinanceSection({ data, onRegenerate, workspaceId }) {
           <p className="text-gray-300">Pricing strategy, revenue projections, and budget planning.</p>
         </div>
         <div className="text-center py-12">
-          <RefreshCw className="animate-spin text-green-500 mx-auto mb-4" size={48} />
+          <DollarSign className="animate-spin text-green-500 mx-auto mb-4" size={48} />
           <p className="text-gray-400 text-lg">Finance Agent is calculating your financial model...</p>
         </div>
       </div>
@@ -47,24 +47,13 @@ function FinanceSection({ data, onRegenerate, workspaceId }) {
             <DollarSign className="text-green-500" size={28} />
             <h2 className="text-2xl font-bold text-white">Finance Team</h2>
           </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setShowChat(!showChat)}
-              className="px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg transition-all flex items-center gap-2"
-            >
-              <MessageCircle size={16} />
-              Chat with Finance
-            </button>
-            {onRegenerate && (
-              <button
-                onClick={onRegenerate}
-                className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-all flex items-center gap-2"
-              >
-                <RefreshCw size={16} />
-                Regenerate
-              </button>
-            )}
-          </div>
+          <button
+            onClick={() => setShowChat(!showChat)}
+            className="px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg transition-all flex items-center gap-2"
+          >
+            <MessageCircle size={16} />
+            Chat with Finance
+          </button>
         </div>
         <p className="text-gray-300">Pricing strategy, revenue projections, and budget planning.</p>
       </div>

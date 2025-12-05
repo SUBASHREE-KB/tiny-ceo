@@ -17,7 +17,12 @@ function OutputCard({ title, content, icon: Icon, status = 'completed' }) {
           </div>
         )}
       </div>
-      <p className="text-gray-300 text-sm leading-relaxed">{content}</p>
+      <p className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap">
+        {typeof content === 'string' ? content :
+         typeof content === 'object' && content !== null ?
+         JSON.stringify(content, null, 2) :
+         String(content)}
+      </p>
     </div>
   );
 }

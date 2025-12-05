@@ -21,7 +21,7 @@ class SalesAgent extends BaseAgent {
     );
   }
 
-  async analyze(conversationAnalysis) {
+  async analyze(conversationAnalysis, options = {}) {
     logger.agent('Sales', 'Starting sales analysis');
 
     const aiService = require('../services/ai.service');
@@ -78,7 +78,7 @@ class SalesAgent extends BaseAgent {
 
 Base your analysis on the actual startup idea, target audience, and solution. Provide specific, actionable sales strategies tailored to THIS startup.`;
 
-      const insights = await aiService.generateAgentAnalysis('sales', conversationAnalysis, instructions);
+      const insights = await aiService.generateAgentAnalysis('sales', conversationAnalysis, instructions, options);
 
       // Fallback to template if AI fails
       if (insights.error) {
