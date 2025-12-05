@@ -114,28 +114,32 @@ class AnalysisService {
     const userMessages = messages.filter(m => m.role === 'user');
     const fullText = userMessages.map(m => m.content).join(' ').toLowerCase();
 
+    // More lenient checks for better UX
     const checks = {
-      hasSufficientMessages: userMessages.length >= 4,
-      hasSufficientContent: fullText.split(/\s+/).length >= 50,
-      mentionsProblem: /problem|issue|challenge|pain|difficult/i.test(fullText),
-      mentionsCustomers: /customer|user|client|audience|target/i.test(fullText),
-      mentionsSolution: /solution|product|platform|service|app/i.test(fullText),
-      mentionsMonetization: /price|pricing|revenue|money|pay|subscription/i.test(fullText)
+      hasSufficientMessages: userMessages.length >= 2, // Reduced from 4 to 2
+      hasSufficientContent: fullText.split(/\s+/).length >= 30, // Reduced from 50 to 30
+      mentionsProblem: /problem|issue|challenge|pain|difficult|struggle|solve|help/i.test(fullText),
+      mentionsCustomers: /customer|user|client|audience|target|people|artisan|seller|buyer/i.test(fullText),
+      mentionsSolution: /solution|product|platform|service|app|marketplace|tool|system/i.test(fullText),
+      mentionsMonetization: /price|pricing|revenue|money|pay|subscription|sell|buy|cost/i.test(fullText)
     };
 
     const score = Object.values(checks).filter(Boolean).length;
     const maxScore = Object.keys(checks).length;
     const maturityPercentage = Math.round((score / maxScore) * 100);
 
+    // More lenient: 3 out of 6 checks (50%) instead of 4 out of 6 (67%)
+    const isReady = score >= 3 && userMessages.length >= 2;
+
     return {
-      isReady: score >= 4, // At least 4 out of 6 checks
+      isReady,
       score,
       maxScore,
       maturityPercentage,
       checks,
-      recommendation: score >= 4
+      recommendation: isReady
         ? 'Conversation is ready for agent analysis'
-        : 'Continue conversation to gather more details about problem, customers, and business model'
+        : 'Continue conversation to gather more details about your startup idea'
     };
   }
 

@@ -115,14 +115,15 @@ function IdeaChat({ idea, onSendMessage, onCreateSpace, loading }) {
 
       {/* Input Area */}
       <div className="border-t border-gray-800 p-6">
-        {idea.messages.length >= 4 && (
+        {idea.messages.length >= 2 && (
           <div className="mb-4">
             <button
               onClick={onCreateSpace}
-              className="w-full px-6 py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white rounded-xl font-semibold transition-all shadow-lg shadow-green-500/20 flex items-center justify-center gap-2"
+              disabled={loading}
+              className="w-full px-6 py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 disabled:from-gray-700 disabled:to-gray-700 disabled:cursor-not-allowed text-white rounded-xl font-semibold transition-all shadow-lg shadow-green-500/20 disabled:shadow-none flex items-center justify-center gap-2"
             >
               <Sparkles size={20} />
-              Create Startup Space
+              {loading ? 'Generating Insights...' : 'Create Startup Space'}
             </button>
           </div>
         )}

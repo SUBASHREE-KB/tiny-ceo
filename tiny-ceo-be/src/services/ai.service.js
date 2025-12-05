@@ -123,15 +123,61 @@ class AIService {
 
   async generateGeminiCompletion(prompt, systemPrompt, options) {
     try {
-      // Combine system prompt and user prompt for Gemini
-      let fullPrompt = prompt;
+      // Build conversation history if available
+      const context = options.context || {};
+      let fullPrompt = '';
+
+      // Add system prompt as context
       if (systemPrompt) {
-        fullPrompt = `${systemPrompt}\n\n${prompt}`;
+        fullPrompt = `${systemPrompt}\n\nUser message: ${prompt}`;
+
+        // Add conversation context for better responses
+        if (context.messageCount !== undefined) {
+          fullPrompt += `\n\nContext: This is message #${context.messageCount + 1} in the conversation.`;
+          if (context.messageCount === 0) {
+            fullPrompt += ' This is the first message, so welcome the user warmly and ask about their startup idea.';
+          }
+        }
+      } else {
+        fullPrompt = prompt;
       }
 
-      const result = await this.client.generateContent(fullPrompt);
-      const response = await result.response;
-      const text = response.text();
+      // Use direct HTTP API instead of SDK
+      const apiKey = this.config.apiKey;
+      const modelName = this.config.model || 'gemini-pro';
+
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1/models/${modelName}:generateContent?key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            contents: [{
+              parts: [{
+                text: fullPrompt
+              }]
+            }],
+            generationConfig: {
+              temperature: options.temperature || 0.7,
+              maxOutputTokens: options.maxTokens || 1000
+            }
+          })
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: { message: `HTTP ${response.status}` } }));
+        throw new Error(`Gemini API error: ${errorData.error?.message || response.statusText}`);
+      }
+
+      const data = await response.json();
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+      if (!text) {
+        throw new Error('Empty response from Gemini API');
+      }
 
       logger.info('Gemini completion generated successfully');
       return text;

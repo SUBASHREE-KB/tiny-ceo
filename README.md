@@ -2,40 +2,79 @@
 
 Your complete startup advisory system with 6 specialized AI agents!
 
-## 📁 Project Structure
-
-```
-startup-agent/
-├── tiny-ceo-fe/          # Frontend (React + Vite)
-├── tiny-ceo-be/          # Backend (Express API)
-├── HOW_TO_USE.md         # Complete usage guide
-└── FOLDER_STRUCTURE.md   # Detailed folder explanation
-```
-
----
-
 ## 🚀 Quick Start
 
-### 1. Start Backend
+### 1. Install Dependencies
+
+```bash
+# Install root dependencies
+npm install
+
+# Install backend dependencies
+cd tiny-ceo-be
+npm install
+
+# Install frontend dependencies
+cd ../tiny-ceo-fe
+npm install
+```
+
+### 2. Configure API Key
+
+Get a free Gemini API key at: https://aistudio.google.com/apikey
+
+Then edit `tiny-ceo-be/.env`:
+```env
+GEMINI_API_KEY=your_api_key_here
+```
+
+### 3. Start the Application
+
+**Backend** (Terminal 1):
 ```bash
 cd tiny-ceo-be
 npm start
 ```
-**Running at**: http://localhost:3001
+Running at: http://localhost:3001
 
-### 2. Start Frontend
+**Frontend** (Terminal 2):
 ```bash
 cd tiny-ceo-fe
 npm run dev
 ```
-**Running at**: http://localhost:5173
+Running at: http://localhost:5173
 
-### 3. Open Your Browser
-Go to: **http://localhost:5173**
+### 4. Open Your Browser
+
+Go to: http://localhost:5173
 
 ---
 
-## ✨ What This App Does
+## 📁 Project Structure
+
+```
+startup-agent/
+├── tiny-ceo-be/          # Backend (Express API)
+│   ├── src/
+│   │   ├── agents/       # AI agent implementations
+│   │   ├── controllers/  # API controllers
+│   │   ├── services/     # Business logic
+│   │   └── routes/       # API routes
+│   └── .env             # Configuration (API keys)
+│
+├── tiny-ceo-fe/         # Frontend (React + Vite)
+│   ├── src/
+│   │   ├── components/  # React components
+│   │   ├── pages/       # Page components
+│   │   └── utils/       # API helpers
+│   └── index.html
+│
+└── README.md            # This file
+```
+
+---
+
+## ✨ Features
 
 ### Intelligent Conversation
 Chat with an AI that learns from your input and asks smart follow-up questions about your startup idea.
@@ -43,12 +82,12 @@ Chat with an AI that learns from your input and asks smart follow-up questions a
 ### 6 AI Agents Generate Insights
 After your conversation, generate comprehensive analysis from:
 
-1. **CEO Strategy** - Competition, roadmap, fundraising
-2. **Developer** - Tech stack, MVP features, timeline
-3. **Finance** - Pricing, revenue projections, unit economics
-4. **Marketing** - Market analysis, positioning, go-to-market
-5. **Sales** - ICP, lead generation, sales playbook
-6. **Overview** - Executive summary, risks, next steps
+1. **CEO Agent** - Competition, roadmap, fundraising
+2. **Developer Agent** - Tech stack, MVP features, timeline
+3. **Finance Agent** - Pricing, revenue projections, unit economics
+4. **Marketing Agent** - Market analysis, positioning, go-to-market
+5. **Sales Agent** - ICP, lead generation, sales playbook
+6. **Overview Agent** - Executive summary, risks, next steps
 
 ### Personalized Analysis
 The AI analyzes YOUR specific conversation to extract:
@@ -58,21 +97,12 @@ The AI analyzes YOUR specific conversation to extract:
 - Business model
 - Unique value proposition
 
-Then generates customized insights for YOUR startup!
-
----
-
-## 📖 Documentation
-
-- **HOW_TO_USE.md** - Complete user guide with examples
-- **FOLDER_STRUCTURE.md** - Detailed folder organization
-
 ---
 
 ## 🎯 Usage Flow
 
 1. **Register** an account
-2. **Chat** about your startup (4+ messages)
+2. **Chat** about your startup (2+ messages)
 3. **Create Workspace** to generate AI insights
 4. **View** personalized analysis from all 6 agents
 
@@ -80,83 +110,129 @@ Then generates customized insights for YOUR startup!
 
 ## 💾 Tech Stack
 
-### Frontend (`tiny-ceo-fe/`)
-- React + Vite
-- Tailwind CSS
+### Frontend
+- React 19 + Vite
+- Tailwind CSS 4
 - React Router
 - Lucide Icons
 
-### Backend (`tiny-ceo-be/`)
-- Express.js
+### Backend
+- Node.js + Express 5
+- Google Gemini AI API
 - JWT Authentication
 - In-memory database
-- CORS enabled
+
+---
+
+## 📖 Documentation
+
+- **AGENT_GENERATION_FIXED.md** - Details on how agent generation works
+- **START_HERE.md** - Comprehensive setup guide
+
+---
+
+## ⚙️ Configuration
+
+### Backend (.env file)
+```env
+AI_PROVIDER=gemini
+GEMINI_API_KEY=your_api_key_here
+GEMINI_MODEL=gemini-2.0-flash
+PORT=3001
+JWT_SECRET=your_jwt_secret_here
+NODE_ENV=development
+```
+
+### Frontend (src/config/api.js)
+```javascript
+export const API_BASE_URL = 'http://localhost:3001';
+```
+
+---
+
+## 🔧 Troubleshooting
+
+### Backend won't start?
+- Check if port 3001 is already in use
+- Verify `.env` file exists in `tiny-ceo-be/`
+- Ensure dependencies are installed: `cd tiny-ceo-be && npm install`
+
+### Frontend won't start?
+- Check if port 5173 is already in use
+- Ensure dependencies are installed: `cd tiny-ceo-fe && npm install`
+- Clear cache: `rm -rf node_modules && npm install`
+
+### API connection errors?
+- Ensure backend is running before starting frontend
+- Check that `API_BASE_URL` in frontend matches backend port
+- Check browser console for CORS errors
+
+### Database errors?
+- App uses in-memory database (data resets on backend restart)
+- This is normal for development
 
 ---
 
 ## ⚠️ Important Notes
 
 ### In-Memory Database
-The backend uses in-memory storage, so:
 - ✅ Perfect for testing and development
 - ✅ Fast and simple
 - ❌ Data resets when you restart the server
 - ❌ Need to register again after restart
 
-### Login Issues?
-If you get a 401 error:
-1. The backend was restarted (which cleared all users)
-2. Just register again with any email/password
-3. You'll be logged in automatically
+### Security
+- Never commit `.env` files to git (already in `.gitignore`)
+- Keep your API keys private
+- Change JWT_SECRET for production
+- Add API restrictions in Google Cloud Console
 
 ---
 
-## 🎉 Features
+## 📞 API Endpoints
 
-✅ Intelligent AI conversation (adapts to your input)
-✅ Context-aware questions (not predefined)
+### Authentication
+- `POST /auth/register` - Register new user
+- `POST /auth/login` - Login user
+
+### Workspaces
+- `GET /workspaces` - Get all workspaces
+- `POST /workspaces` - Create new workspace
+- `GET /workspaces/:id` - Get workspace by ID
+
+### Conversations
+- `GET /workspaces/:id/conversations` - Get messages
+- `POST /workspaces/:id/conversations/message` - Send message
+
+### Agents
+- `POST /workspaces/:id/agents/generate` - Generate all agents
+- `GET /workspaces/:id/agents` - Get agent outputs
+- `POST /workspaces/:id/agents/:type/regenerate` - Regenerate agent
+
+---
+
+## 🎉 What's Working
+
+✅ Real AI-powered conversations
+✅ Dynamic, contextual responses
+✅ Workspace creation and management
 ✅ 6 specialized AI agents
-✅ Personalized startup analysis
-✅ Investment-ready insights
-✅ Executive summaries
-✅ Competitive analysis
-✅ Financial projections
-✅ Go-to-market strategy
-✅ Sales playbook
-✅ Technical roadmap
+✅ Customized startup analysis
+✅ User authentication
 
 ---
 
-## 🔧 Troubleshooting
-
-**Backend not responding?**
-```bash
-cd tiny-ceo-be
-npm start
-```
-
-**Frontend not loading?**
-```bash
-cd tiny-ceo-fe
-npm run dev
-```
-
-**401 Unauthorized?**
-- Register a new account (backend was restarted)
-
-**More help?**
-- See `HOW_TO_USE.md` for detailed troubleshooting
-
----
-
-## 📞 Quick Links
+## 📊 Quick Links
 
 - Frontend: http://localhost:5173
 - Backend API: http://localhost:3001
 - Health Check: http://localhost:3001/health
+- Get API Key: https://aistudio.google.com/apikey
 
 ---
 
-**Built with**: React, Express, Tailwind CSS, JWT
-**Status**: Fully functional (in-memory storage)
-**Last Updated**: 2025-11-29
+**Built with**: React, Express, Tailwind CSS, JWT, Google Gemini AI
+**Status**: ✅ Fully functional
+**Last Updated**: 2025-12-05
+
+Happy Building! 🚀
