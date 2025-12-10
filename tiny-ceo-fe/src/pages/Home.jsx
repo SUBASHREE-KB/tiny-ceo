@@ -60,7 +60,7 @@ function IdeaSidebar({ ideas, activeIdeaIndex, onSelectIdea, onNewIdea, onLogout
 }
 
 // IdeaChat Component
-function IdeaChat({ idea, onSendMessage, onCreateSpace, loading }) {
+function IdeaChat({ idea, onSendMessage, onCreateSpace, onViewWorkspace, loading }) {
   const [input, setInput] = useState('');
 
   const handleSend = () => {
@@ -130,14 +130,24 @@ function IdeaChat({ idea, onSendMessage, onCreateSpace, loading }) {
       <div className="border-t border-gray-800 p-6">
         {idea.messages.length >= 2 && (
           <div className="mb-4">
-            <button
-              onClick={onCreateSpace}
-              disabled={loading}
-              className="w-full px-6 py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 disabled:from-gray-700 disabled:to-gray-700 disabled:cursor-not-allowed text-white rounded-xl font-semibold transition-all shadow-lg shadow-green-500/20 disabled:shadow-none flex items-center justify-center gap-2"
-            >
-              <Sparkles size={20} />
-              {loading ? 'Generating Insights...' : 'Create Startup Space'}
-            </button>
+            {idea.has_agent_outputs ? (
+              <button
+                onClick={onViewWorkspace}
+                className="w-full px-6 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-xl font-semibold transition-all shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2"
+              >
+                <Sparkles size={20} />
+                See Workspace
+              </button>
+            ) : (
+              <button
+                onClick={onCreateSpace}
+                disabled={loading}
+                className="w-full px-6 py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 disabled:from-gray-700 disabled:to-gray-700 disabled:cursor-not-allowed text-white rounded-xl font-semibold transition-all shadow-lg shadow-green-500/20 disabled:shadow-none flex items-center justify-center gap-2"
+              >
+                <Sparkles size={20} />
+                {loading ? 'Generating Insights...' : 'Create Startup Space'}
+              </button>
+            )}
           </div>
         )}
         
@@ -185,12 +195,25 @@ function Home() {
     try {
       const data = await workspaceAPI.getAll();
       if (data.workspaces && data.workspaces.length > 0) {
-        // Transform workspaces to match UI format
-        const formattedWorkspaces = data.workspaces.map(ws => ({
-          id: ws.id,
-          title: ws.title,
-          messages: [] // Will load messages separately
-        }));
+        // Transform workspaces to match UI format and check for agent outputs
+        const formattedWorkspaces = await Promise.all(
+          data.workspaces.map(async (ws) => {
+            let hasAgentOutputs = false;
+            try {
+              const agentsData = await agentAPI.getOutputs(ws.id);
+              hasAgentOutputs = agentsData.outputs && agentsData.outputs.length > 0;
+            } catch (err) {
+              console.error('Failed to check agent outputs:', err);
+            }
+
+            return {
+              id: ws.id,
+              title: ws.title,
+              messages: [], // Will load messages separately
+              has_agent_outputs: hasAgentOutputs
+            };
+          })
+        );
         setWorkspaces(formattedWorkspaces);
 
         // Load messages for first workspace
@@ -230,7 +253,8 @@ function Home() {
       const newWorkspace = {
         id: data.workspace.id,
         title: data.workspace.title,
-        messages: []
+        messages: [],
+        has_agent_outputs: false
       };
       setWorkspaces([...workspaces, newWorkspace]);
       setActiveWorkspaceIndex(workspaces.length);
@@ -303,6 +327,12 @@ function Home() {
     try {
       // Trigger agent generation
       await agentAPI.generateAll(activeWorkspace.id);
+
+      // Update workspace to mark it as having agent outputs
+      const updatedWorkspaces = [...workspaces];
+      updatedWorkspaces[activeWorkspaceIndex].has_agent_outputs = true;
+      setWorkspaces(updatedWorkspaces);
+
       // Navigate to workspace page
       navigate(`/workspace/${activeWorkspace.id}`);
     } catch (err) {
@@ -310,6 +340,15 @@ function Home() {
       setError('Failed to generate agent insights');
       setLoading(false);
     }
+  };
+
+  const handleViewWorkspace = () => {
+    const activeWorkspace = workspaces[activeWorkspaceIndex];
+    if (!activeWorkspace.id) {
+      setError('Workspace not initialized');
+      return;
+    }
+    navigate(`/workspace/${activeWorkspace.id}`);
   };
 
   const handleLogout = () => {
@@ -348,6 +387,7 @@ function Home() {
         idea={workspaces[activeWorkspaceIndex]}
         onSendMessage={updateMessages}
         onCreateSpace={handleCreateSpace}
+        onViewWorkspace={handleViewWorkspace}
         loading={loading}
       />
     </div>

@@ -41,6 +41,8 @@ ${JSON.stringify(data, null, 2)}
 Generate a comprehensive executive overview with this EXACT JSON structure:
 {
   "executive_summary": {
+    "startup_name": "string (catchy 1-2 word startup name like 'Stripe', 'Airbnb', 'Notion' - make it memorable and relevant to the solution)",
+    "tagline": "string (5-7 word tagline describing what the startup does)",
     "one_sentence_pitch": "string (elevator pitch combining problem, solution, target market)",
     "opportunity_overview": "string (2-3 sentences on market opportunity, business model, and growth potential)",
     "market_context": {
@@ -154,7 +156,13 @@ Now synthesize this into actionable strategic guidance.`;
     const unitEcon = financeData.unit_economics || {};
     const ltvCacRatio = unitEcon.ltv_to_cac_ratio?.ratio || '8:1';
 
+    // Generate a simple startup name from the solution
+    const startupName = this.generateStartupName(solution, industry);
+    const tagline = this.generateTagline(solution, targetAudience);
+
     return {
+      startup_name: startupName,
+      tagline: tagline,
       one_sentence_pitch: `${solution} for ${targetAudience} in the ${industry} industry`,
 
       opportunity_overview: `A ${industry} solution targeting ${targetAudience}. The product addresses ${problem} through ${uniqueValue}. With a clear go-to-market strategy focused on product-led growth and content marketing, combined with strong unit economics (${ltvCacRatio} LTV:CAC ratio), this represents a significant market opportunity with a realistic path to $2M+ ARR by year 3.`,
@@ -814,6 +822,49 @@ Now synthesize this into actionable strategic guidance.`;
         'What blockers need to be addressed?'
       ]
     };
+  }
+
+  generateStartupName(solution, industry) {
+    // Extract key words from solution
+    const words = solution.toLowerCase().split(' ');
+    const stopWords = ['a', 'an', 'the', 'for', 'to', 'of', 'in', 'on', 'at', 'by', 'with', 'and', 'or', 'but'];
+    const meaningfulWords = words.filter(w => !stopWords.includes(w) && w.length > 3);
+
+    // Common startup name patterns
+    const patterns = [
+      // Tech-style names
+      () => {
+        const word = meaningfulWords[0] || 'start';
+        return word.charAt(0).toUpperCase() + word.slice(1, -1) + 'ly';
+      },
+      () => {
+        const word = meaningfulWords[0] || 'start';
+        return word.charAt(0).toUpperCase() + word.slice(1) + 'ify';
+      },
+      () => {
+        const word1 = meaningfulWords[0] || 'start';
+        const word2 = meaningfulWords[1] || 'up';
+        return word1.charAt(0).toUpperCase() + word1.slice(1, 4) +
+               word2.charAt(0).toUpperCase() + word2.slice(1, 3);
+      },
+      // Simple one-word names
+      () => {
+        const word = meaningfulWords[0] || 'venture';
+        return word.charAt(0).toUpperCase() + word.slice(1);
+      }
+    ];
+
+    // Pick a random pattern
+    const pattern = patterns[Math.floor(Math.random() * patterns.length)];
+    return pattern();
+  }
+
+  generateTagline(solution, targetAudience) {
+    // Create a simple tagline
+    const cleanSolution = solution.replace(/^(a|an|the)\s+/i, '');
+    const cleanAudience = targetAudience.replace(/^(for|to)\s+/i, '');
+
+    return `${cleanSolution} for ${cleanAudience}`.slice(0, 60);
   }
 }
 

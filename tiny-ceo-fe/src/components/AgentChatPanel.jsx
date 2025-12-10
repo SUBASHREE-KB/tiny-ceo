@@ -2,12 +2,22 @@ import React, { useState, useRef, useEffect } from 'react';
 import { MessageCircle, Send, X, Minimize2 } from 'lucide-react';
 import { apiRequest } from '../utils/api';
 
-function AgentChatPanel({ agentType, workspaceId, onClose }) {
+function AgentChatPanel({ agentType, workspaceId, onClose, embedded = false }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const messagesEndRef = useRef(null);
+
+  // Add initial welcome message for developer chat
+  useEffect(() => {
+    if (agentType === 'developer' && messages.length === 0) {
+      setMessages([{
+        role: 'assistant',
+        content: '👋 Hi! I\'m your AI Code Assistant. I can help you with:\n\n• Generating code snippets (API endpoints, components, etc.)\n• Database schema design\n• Architecture recommendations\n• Debugging assistance\n• Best practices and code review\n\nWhat would you like me to help you build?'
+      }]);
+    }
+  }, [agentType]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -79,7 +89,7 @@ function AgentChatPanel({ agentType, workspaceId, onClose }) {
 
   const color = agentColors[agentType] || 'blue';
 
-  if (isMinimized) {
+  if (isMinimized && !embedded) {
     return (
       <div className="fixed bottom-4 right-4 bg-gray-900 border border-gray-700 rounded-lg shadow-2xl p-3 cursor-pointer hover:bg-gray-800 transition-all z-50"
            onClick={() => setIsMinimized(false)}>
@@ -94,6 +104,74 @@ function AgentChatPanel({ agentType, workspaceId, onClose }) {
     );
   }
 
+  // Embedded mode (inline in page)
+  if (embedded) {
+    return (
+      <div className="h-full bg-transparent flex flex-col">
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          {messages.map((msg, idx) => (
+            <div
+              key={idx}
+              className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+            >
+              <div
+                className={`max-w-[85%] px-4 py-3 rounded-lg ${
+                  msg.role === 'user'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-800 text-gray-200'
+                }`}
+              >
+                <p className="text-sm whitespace-pre-wrap break-words font-mono">{msg.content}</p>
+              </div>
+            </div>
+          ))}
+
+          {loading && (
+            <div className="flex justify-start">
+              <div className="bg-gray-800 text-gray-200 px-4 py-3 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <div className="animate-pulse">Generating code...</div>
+                  <div className="flex gap-1">
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div ref={messagesEndRef} />
+        </div>
+
+        {/* Input */}
+        <div className="p-4 border-t border-gray-800 flex-shrink-0">
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Ask me to generate code..."
+              disabled={loading}
+              className="flex-1 px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white text-sm placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            />
+            <button
+              onClick={sendMessage}
+              disabled={loading || !input.trim()}
+              className="px-4 py-3 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-700 disabled:cursor-not-allowed text-white rounded-lg transition-all flex items-center justify-center flex-shrink-0"
+              aria-label="Send message"
+            >
+              <Send size={18} />
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Popup mode (floating panel)
   return (
     <div className="fixed inset-x-0 bottom-0 sm:inset-auto sm:bottom-4 sm:right-4 sm:w-96 sm:max-w-md h-[80vh] sm:h-[600px] sm:max-h-[85vh] bg-gray-900 border-t sm:border border-gray-700 sm:rounded-lg shadow-2xl flex flex-col z-50">
       {/* Header */}

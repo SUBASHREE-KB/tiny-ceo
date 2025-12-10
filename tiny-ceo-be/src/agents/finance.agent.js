@@ -101,6 +101,9 @@ Base your analysis on the actual business model and target market. Provide reali
     const { industry } = conversationAnalysis;
     const pricingData = await this.searchPricingBenchmarks(industry, 'saas');
 
+    // Generate AI-powered financial intelligence for visualization data
+    const financialIntelligence = await this.generateFinancialIntelligence(conversationAnalysis);
+
     return {
       pricing: this.generatePricingStrategy(pricingData, conversationAnalysis),
       revenue_projections: this.generateRevenueProjections(conversationAnalysis),
@@ -108,7 +111,14 @@ Base your analysis on the actual business model and target market. Provide reali
       budget: this.generateBudget(conversationAnalysis),
       breakeven: this.calculateBreakeven(conversationAnalysis),
       financial_metrics: this.defineFinancialMetrics(),
-      funding_runway: this.calculateRunway(conversationAnalysis)
+      funding_runway: this.calculateRunway(conversationAnalysis),
+      // New: Visualization data powered by AI analysis
+      cash_flow_data: this.generateCashFlowData(conversationAnalysis, financialIntelligence),
+      monthly_financials: this.generateMonthlyFinancials(conversationAnalysis, financialIntelligence),
+      revenue_scenarios: this.generateRevenueScenarios(conversationAnalysis, financialIntelligence),
+      expense_breakdown: this.generateExpenseBreakdown(conversationAnalysis, financialIntelligence),
+      burn_rate_runway: this.generateBurnRateRunway(conversationAnalysis, financialIntelligence),
+      profitability_timeline: this.generateProfitabilityTimeline(conversationAnalysis, financialIntelligence)
     };
   }
 
@@ -556,6 +566,471 @@ Base your analysis on the actual business model and target market. Provide reali
         'Raise bridge if: Revenue growth slower than planned and <9 months runway',
         'Raise extension if: Strong metrics but need more time to hit Series A thresholds'
       ]
+    };
+  }
+
+  // Generate cash flow data for visualization
+  // Generate AI-powered financial intelligence specific to the startup idea
+  async generateFinancialIntelligence(conversationAnalysis) {
+    const aiService = require('../services/ai.service');
+
+    try {
+      const prompt = `Analyze the financial outlook for this startup and provide realistic data:
+
+Startup Context:
+- Industry: ${conversationAnalysis.industry}
+- Target Audience: ${conversationAnalysis.targetAudience}
+- Problem: ${conversationAnalysis.problem}
+- Solution: ${conversationAnalysis.solution}
+- Business Model: ${conversationAnalysis.businessModel}
+
+Provide a JSON response with realistic financial intelligence:
+{
+  "revenue_model": {
+    "initial_mrr": number (realistic starting monthly recurring revenue),
+    "monthly_growth_rate": number (e.g., 0.15 for 15% MoM growth),
+    "average_deal_size": number (average revenue per customer per month)
+  },
+  "costs": {
+    "initial_funding": number (typical seed funding amount),
+    "monthly_burn_rate": number (monthly operating expenses),
+    "fixed_costs_percentage": number (e.g., 0.60 for 60% fixed costs),
+    "variable_costs_percentage": number (e.g., 0.20 for 20% COGS)
+  },
+  "growth_metrics": {
+    "customer_acquisition_cost": number,
+    "customer_lifetime_value": number,
+    "monthly_churn_rate": number (e.g., 0.05 for 5%),
+    "gross_margin_percentage": number (e.g., 0.75 for 75%)
+  },
+  "runway": {
+    "months_to_break_even": number,
+    "total_funding_needed": number,
+    "runway_months": number
+  }
+}
+
+Base your analysis on typical financial metrics for similar startups in the ${conversationAnalysis.industry} industry.`;
+
+      const response = await aiService.generateCompletion(prompt, null, {
+        temperature: 0.7
+      });
+
+      // Parse the AI response
+      let cleanResponse = response.trim();
+      if (cleanResponse.startsWith('```json')) {
+        cleanResponse = cleanResponse.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+      } else if (cleanResponse.startsWith('```')) {
+        cleanResponse = cleanResponse.replace(/```\n?/g, '');
+      }
+
+      const intelligence = JSON.parse(cleanResponse);
+      logger.info('Financial intelligence generated via AI', { industry: conversationAnalysis.industry });
+      return intelligence;
+    } catch (error) {
+      logger.warn('AI financial intelligence failed, using educated estimates', error);
+      return this.generateFallbackFinancialIntelligence(conversationAnalysis);
+    }
+  }
+
+  // Fallback financial intelligence based on industry patterns
+  generateFallbackFinancialIntelligence(conversationAnalysis) {
+    const industryDefaults = {
+      'SaaS': {
+        initial_mrr: 5000,
+        monthly_growth_rate: 0.15,
+        initial_funding: 750000,
+        monthly_burn_rate: 35000,
+        cac: 150,
+        ltv: 1200,
+        churn_rate: 0.05
+      },
+      'E-commerce': {
+        initial_mrr: 8000,
+        monthly_growth_rate: 0.20,
+        initial_funding: 500000,
+        monthly_burn_rate: 30000,
+        cac: 80,
+        ltv: 800,
+        churn_rate: 0.08
+      },
+      'Fintech': {
+        initial_mrr: 6000,
+        monthly_growth_rate: 0.18,
+        initial_funding: 1000000,
+        monthly_burn_rate: 45000,
+        cac: 200,
+        ltv: 1500,
+        churn_rate: 0.04
+      },
+      'Healthcare': {
+        initial_mrr: 10000,
+        monthly_growth_rate: 0.12,
+        initial_funding: 1200000,
+        monthly_burn_rate: 50000,
+        cac: 300,
+        ltv: 2000,
+        churn_rate: 0.03
+      }
+    };
+
+    const defaults = industryDefaults[conversationAnalysis.industry] || industryDefaults['SaaS'];
+
+    return {
+      revenue_model: {
+        initial_mrr: defaults.initial_mrr,
+        monthly_growth_rate: defaults.monthly_growth_rate,
+        average_deal_size: 50
+      },
+      costs: {
+        initial_funding: defaults.initial_funding,
+        monthly_burn_rate: defaults.monthly_burn_rate,
+        fixed_costs_percentage: 0.60,
+        variable_costs_percentage: 0.20
+      },
+      growth_metrics: {
+        customer_acquisition_cost: defaults.cac,
+        customer_lifetime_value: defaults.ltv,
+        monthly_churn_rate: defaults.churn_rate,
+        gross_margin_percentage: 0.75
+      },
+      runway: {
+        months_to_break_even: Math.ceil(defaults.monthly_burn_rate / (defaults.initial_mrr * defaults.monthly_growth_rate)),
+        total_funding_needed: defaults.initial_funding,
+        runway_months: Math.floor(defaults.initial_funding / defaults.monthly_burn_rate)
+      }
+    };
+  }
+
+  generateCashFlowData(analysis, financialIntelligence) {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const data = [];
+
+    // Use AI-generated values
+    const initialFunding = financialIntelligence.costs.initial_funding;
+    const monthlyBurnRate = financialIntelligence.costs.monthly_burn_rate;
+    const initialMRR = financialIntelligence.revenue_model.initial_mrr;
+    const monthlyGrowthRate = financialIntelligence.revenue_model.monthly_growth_rate;
+
+    let cumulativeCash = initialFunding;
+
+    for (let i = 0; i < 12; i++) {
+      // Revenue grows based on AI-generated growth rate
+      const revenue = Math.round(initialMRR * Math.pow(1 + monthlyGrowthRate, i));
+
+      // Expenses based on AI-generated burn rate
+      const expenses = monthlyBurnRate;
+
+      const netCashFlow = revenue - expenses;
+      cumulativeCash += netCashFlow;
+
+      data.push({
+        month: months[i],
+        revenue: revenue,
+        expenses: expenses,
+        net_cash_flow: netCashFlow,
+        cumulative_cash: Math.round(cumulativeCash),
+        runway_months: cumulativeCash > 0 ? Math.round(cumulativeCash / expenses) : 0
+      });
+    }
+
+    return {
+      monthly_data: data,
+      summary: {
+        starting_cash: initialFunding,
+        ending_cash: Math.round(cumulativeCash),
+        total_revenue: data.reduce((sum, m) => sum + m.revenue, 0),
+        total_expenses: data.reduce((sum, m) => sum + m.expenses, 0),
+        average_runway: cumulativeCash > 0 ? Math.round(cumulativeCash / monthlyBurnRate) : 0
+      }
+    };
+  }
+
+  // Generate monthly P&L data
+  generateMonthlyFinancials(analysis, financialIntelligence) {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const data = [];
+
+    // Use AI-generated values
+    const initialMRR = financialIntelligence.revenue_model.initial_mrr;
+    const monthlyGrowthRate = financialIntelligence.revenue_model.monthly_growth_rate;
+    const variableCostsPct = financialIntelligence.costs.variable_costs_percentage;
+    const monthlyBurnRate = financialIntelligence.costs.monthly_burn_rate;
+    const grossMarginPct = financialIntelligence.growth_metrics.gross_margin_percentage;
+
+    // Calculate COGS percentage from gross margin
+    const cogsPct = 1 - grossMarginPct;
+
+    // Breakdown of operating expenses (based on burn rate)
+    const engineering = Math.round(monthlyBurnRate * 0.36); // 36% of burn
+    const salesMarketing = Math.round(monthlyBurnRate * 0.27); // 27% of burn
+    const operations = Math.round(monthlyBurnRate * 0.14); // 14% of burn
+    const salaries = Math.round(monthlyBurnRate * 0.23); // 23% of burn
+
+    for (let i = 0; i < 12; i++) {
+      const revenue = Math.round(initialMRR * Math.pow(1 + monthlyGrowthRate, i));
+      const cogs = Math.round(revenue * cogsPct);
+      const grossProfit = revenue - cogs;
+
+      const totalOpex = engineering + salesMarketing + operations + salaries;
+
+      const ebitda = grossProfit - totalOpex;
+      const netIncome = ebitda; // Simplified, no taxes/interest for early stage
+
+      data.push({
+        month: months[i],
+        revenue: revenue,
+        cogs: cogs,
+        gross_profit: grossProfit,
+        gross_margin: ((grossProfit / revenue) * 100).toFixed(1),
+        engineering: engineering,
+        sales_marketing: salesMarketing,
+        operations: operations,
+        salaries: salaries,
+        total_opex: totalOpex,
+        ebitda: ebitda,
+        net_income: netIncome,
+        net_margin: ((netIncome / revenue) * 100).toFixed(1)
+      });
+    }
+
+    return {
+      monthly_data: data,
+      annual_summary: {
+        total_revenue: data.reduce((sum, m) => sum + m.revenue, 0),
+        total_cogs: data.reduce((sum, m) => sum + m.cogs, 0),
+        total_opex: data.reduce((sum, m) => sum + m.total_opex, 0),
+        net_income: data.reduce((sum, m) => sum + m.net_income, 0),
+        avg_gross_margin: (grossMarginPct * 100).toFixed(1) + '%',
+        avg_net_margin: ((data.reduce((sum, m) => sum + m.net_income, 0) / data.reduce((sum, m) => sum + m.revenue, 0)) * 100).toFixed(1) + '%'
+      }
+    };
+  }
+
+  // Generate revenue scenario projections
+  generateRevenueScenarios(analysis, financialIntelligence) {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const data = [];
+
+    // Use AI-generated values
+    const initialMRR = financialIntelligence.revenue_model.initial_mrr;
+    const baseGrowthRate = financialIntelligence.revenue_model.monthly_growth_rate;
+    const averageDealSize = financialIntelligence.revenue_model.average_deal_size;
+
+    // Create three scenarios based on the AI-generated growth rate
+    const conservativeRate = baseGrowthRate * 0.67; // 33% lower than base
+    const realisticRate = baseGrowthRate; // Use AI-generated rate
+    const optimisticRate = baseGrowthRate * 1.33; // 33% higher than base
+
+    for (let i = 0; i < 12; i++) {
+      const conservative = Math.round(initialMRR * Math.pow(1 + conservativeRate, i));
+      const realistic = Math.round(initialMRR * Math.pow(1 + realisticRate, i));
+      const optimistic = Math.round(initialMRR * Math.pow(1 + optimisticRate, i));
+
+      data.push({
+        month: months[i],
+        conservative: conservative,
+        realistic: realistic,
+        optimistic: optimistic
+      });
+    }
+
+    return {
+      monthly_data: data,
+      year_end_projections: {
+        conservative: {
+          mrr: data[11].conservative,
+          arr: data[11].conservative * 12,
+          customers: Math.round(data[11].conservative / averageDealSize)
+        },
+        realistic: {
+          mrr: data[11].realistic,
+          arr: data[11].realistic * 12,
+          customers: Math.round(data[11].realistic / averageDealSize)
+        },
+        optimistic: {
+          mrr: data[11].optimistic,
+          arr: data[11].optimistic * 12,
+          customers: Math.round(data[11].optimistic / averageDealSize)
+        }
+      }
+    };
+  }
+
+  // Generate expense breakdown for pie chart
+  generateExpenseBreakdown(analysis, financialIntelligence) {
+    // Use AI-generated burn rate
+    const monthlyBurnRate = financialIntelligence.costs.monthly_burn_rate;
+    const annualBurnRate = monthlyBurnRate * 12;
+
+    // Calculate breakdown based on typical SaaS expense ratios
+    const engineeringPct = 0.36;
+    const marketingPct = 0.27;
+    const salariesPct = 0.23;
+    const operationsPct = 0.14;
+
+    const engineeringMonthly = Math.round(monthlyBurnRate * engineeringPct);
+    const marketingMonthly = Math.round(monthlyBurnRate * marketingPct);
+    const salariesMonthly = Math.round(monthlyBurnRate * salariesPct);
+    const operationsMonthly = Math.round(monthlyBurnRate * operationsPct);
+
+    return {
+      categories: [
+        {
+          name: 'Engineering & Product',
+          amount: engineeringMonthly * 12,
+          monthly: engineeringMonthly,
+          percentage: parseFloat((engineeringPct * 100).toFixed(1))
+        },
+        {
+          name: 'Sales & Marketing',
+          amount: marketingMonthly * 12,
+          monthly: marketingMonthly,
+          percentage: parseFloat((marketingPct * 100).toFixed(1))
+        },
+        {
+          name: 'Founder Salaries',
+          amount: salariesMonthly * 12,
+          monthly: salariesMonthly,
+          percentage: parseFloat((salariesPct * 100).toFixed(1))
+        },
+        {
+          name: 'Operations & Infrastructure',
+          amount: operationsMonthly * 12,
+          monthly: operationsMonthly,
+          percentage: parseFloat((operationsPct * 100).toFixed(1))
+        }
+      ],
+      total_annual: annualBurnRate,
+      total_monthly: monthlyBurnRate,
+      breakdown_details: {
+        engineering: {
+          engineers: Math.round(engineeringMonthly * 12 * 0.875),
+          product_manager: Math.round(engineeringMonthly * 12 * 0.10),
+          tools: Math.round(engineeringMonthly * 12 * 0.025)
+        },
+        marketing: {
+          paid_ads: Math.round(marketingMonthly * 12 * 0.40),
+          content: Math.round(marketingMonthly * 12 * 0.20),
+          tools: Math.round(marketingMonthly * 12 * 0.10),
+          events: Math.round(marketingMonthly * 12 * 0.30)
+        },
+        operations: {
+          hosting: Math.round(operationsMonthly * 12 * 0.30),
+          software: Math.round(operationsMonthly * 12 * 0.40),
+          legal_accounting: Math.round(operationsMonthly * 12 * 0.30)
+        }
+      }
+    };
+  }
+
+  // Generate burn rate and runway data
+  generateBurnRateRunway(analysis, financialIntelligence) {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const data = [];
+
+    // Use AI-generated values
+    const initialCash = financialIntelligence.costs.initial_funding;
+    const monthlyBurnRate = financialIntelligence.costs.monthly_burn_rate;
+    const initialMRR = financialIntelligence.revenue_model.initial_mrr;
+    const monthlyGrowthRate = financialIntelligence.revenue_model.monthly_growth_rate;
+    const breakEvenMonth = financialIntelligence.runway.months_to_break_even;
+
+    let cash = initialCash;
+
+    for (let i = 0; i < 24; i++) { // 24 months projection
+      const monthIndex = i % 12;
+
+      // Revenue grows based on AI-generated growth rate
+      const revenue = Math.round(initialMRR * Math.pow(1 + monthlyGrowthRate, i));
+      const expenses = monthlyBurnRate;
+      const burn = expenses - revenue;
+
+      cash += revenue - expenses;
+
+      if (i < 12) {
+        data.push({
+          month: months[monthIndex],
+          period: i + 1,
+          revenue: revenue,
+          expenses: expenses,
+          burn_rate: burn > 0 ? burn : 0,
+          cash_balance: Math.round(cash),
+          runway_months: cash > 0 ? Math.round(cash / (burn > 0 ? burn : 1)) : 0,
+          is_projection: i > 11
+        });
+      }
+    }
+
+    return {
+      monthly_data: data,
+      key_metrics: {
+        initial_cash: initialCash,
+        current_burn_rate: monthlyBurnRate,
+        average_burn_rate: Math.round(data.slice(0, 6).reduce((sum, m) => sum + m.burn_rate, 0) / 6),
+        runway_remaining: data[11].runway_months,
+        break_even_month: breakEvenMonth
+      }
+    };
+  }
+
+  // Generate profitability timeline
+  generateProfitabilityTimeline(analysis, financialIntelligence) {
+    const quarters = ['Q1', 'Q2', 'Q3', 'Q4', 'Q1 Y2', 'Q2 Y2', 'Q3 Y2', 'Q4 Y2'];
+    const data = [];
+
+    // Use AI-generated values
+    const initialMRR = financialIntelligence.revenue_model.initial_mrr;
+    const monthlyGrowthRate = financialIntelligence.revenue_model.monthly_growth_rate;
+    const monthlyBurnRate = financialIntelligence.costs.monthly_burn_rate;
+    const breakEvenMonth = financialIntelligence.runway.months_to_break_even;
+    const grossMarginPct = financialIntelligence.growth_metrics.gross_margin_percentage;
+
+    // Calculate quarterly projections
+    for (let i = 0; i < 8; i++) {
+      const startMonth = i * 3;
+      const endMonth = startMonth + 2;
+
+      // Calculate quarterly revenue (sum of 3 months)
+      let quarterRevenue = 0;
+      for (let m = startMonth; m <= endMonth; m++) {
+        quarterRevenue += Math.round(initialMRR * Math.pow(1 + monthlyGrowthRate, m));
+      }
+
+      // Quarterly expenses (3 months of burn)
+      const quarterExpenses = monthlyBurnRate * 3;
+
+      const profit = quarterRevenue - quarterExpenses;
+      const margin = quarterRevenue > 0 ? ((profit / quarterRevenue) * 100).toFixed(1) : '0.0';
+
+      data.push({
+        quarter: quarters[i],
+        revenue: quarterRevenue,
+        expenses: quarterExpenses,
+        profit: profit,
+        profit_margin: parseFloat(margin),
+        break_even: profit >= 0
+      });
+    }
+
+    // Determine break-even quarter
+    const breakEvenQuarter = Math.ceil(breakEvenMonth / 3);
+    const breakEvenQuarterName = breakEvenQuarter <= 4
+      ? `Q${breakEvenQuarter}`
+      : `Q${breakEvenQuarter - 4} Y2`;
+
+    // Find first profitable quarter
+    const firstProfitableQuarter = data.find(q => q.break_even);
+    const positiveMerginQuarter = data.find(q => q.profit_margin > 10);
+
+    return {
+      quarterly_data: data,
+      milestones: {
+        break_even_quarter: firstProfitableQuarter ? firstProfitableQuarter.quarter : breakEvenQuarterName,
+        positive_margin_quarter: positiveMerginQuarter ? positiveMerginQuarter.quarter : 'Q4 Y2',
+        target_margin: Math.round(grossMarginPct * 100) + '%',
+        current_trajectory: `On track for profitability by month ${breakEvenMonth}`
+      }
     };
   }
 }
