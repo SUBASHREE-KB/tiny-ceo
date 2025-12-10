@@ -1,0 +1,232 @@
+{
+  "name": "tiny-ceo-raindrop",
+  "version": "1.0.0",
+  "description": "Tiny CEO AI-powered startup analysis platform with Raindrop MCP integration",
+
+  "smartComponents": {
+    "smartSQL": {
+      "enabled": true,
+      "database": "tiny_ceo_production",
+      "schema": "public",
+      "tables": [
+        "users",
+        "workspaces",
+        "agent_outputs",
+        "chat_history",
+        "file_metadata"
+      ],
+      "connectionPool": {
+        "min": 2,
+        "max": 10
+      }
+    },
+
+    "smartMemory": {
+      "enabled": true,
+      "namespaces": [
+        "user_profiles",
+        "user_preferences",
+        "session_data",
+        "agent_contexts",
+        "workspace_cache"
+      ],
+      "ttl": {
+        "user_profiles": null,
+        "user_preferences": null,
+        "session_data": 86400,
+        "agent_contexts": 3600,
+        "workspace_cache": 1800
+      }
+    },
+
+    "smartInference": {
+      "enabled": true,
+      "defaultModel": "claude-sonnet-4-5",
+      "models": [
+        {
+          "name": "claude-opus-4-5",
+          "provider": "anthropic",
+          "useCase": "strategic-analysis",
+          "maxTokens": 4096,
+          "temperature": 0.7
+        },
+        {
+          "name": "claude-sonnet-4-5",
+          "provider": "anthropic",
+          "useCase": "general-analysis",
+          "maxTokens": 8192,
+          "temperature": 0.5
+        },
+        {
+          "name": "claude-haiku-4-5",
+          "provider": "anthropic",
+          "useCase": "chat",
+          "maxTokens": 2048,
+          "temperature": 0.3
+        }
+      ],
+      "routing": {
+        "ceo-agent": "claude-opus-4-5",
+        "finance-agent": "claude-sonnet-4-5",
+        "marketing-agent": "claude-sonnet-4-5",
+        "sales-agent": "claude-sonnet-4-5",
+        "developer-agent": "claude-sonnet-4-5",
+        "overview-agent": "claude-sonnet-4-5",
+        "chat": "claude-haiku-4-5"
+      },
+      "caching": {
+        "enabled": true,
+        "ttl": 3600
+      }
+    }
+  },
+
+  "tools": [
+    {
+      "name": "create-user",
+      "description": "Create a new user account",
+      "smartComponent": "smartSQL",
+      "operation": "insert",
+      "table": "users"
+    },
+    {
+      "name": "get-user",
+      "description": "Retrieve user by ID or email",
+      "smartComponent": "smartSQL",
+      "operation": "select",
+      "table": "users"
+    },
+    {
+      "name": "create-workspace",
+      "description": "Create a new startup workspace",
+      "smartComponent": "smartSQL",
+      "operation": "insert",
+      "table": "workspaces"
+    },
+    {
+      "name": "get-workspace",
+      "description": "Retrieve workspace by ID",
+      "smartComponent": "smartSQL",
+      "operation": "select",
+      "table": "workspaces"
+    },
+    {
+      "name": "list-workspaces",
+      "description": "List all workspaces for a user",
+      "smartComponent": "smartSQL",
+      "operation": "select",
+      "table": "workspaces"
+    },
+    {
+      "name": "save-agent-output",
+      "description": "Save AI agent analysis output",
+      "smartComponent": "smartSQL",
+      "operation": "insert",
+      "table": "agent_outputs"
+    },
+    {
+      "name": "get-agent-outputs",
+      "description": "Retrieve all agent outputs for a workspace",
+      "smartComponent": "smartSQL",
+      "operation": "select",
+      "table": "agent_outputs"
+    },
+    {
+      "name": "save-chat-message",
+      "description": "Save chat history",
+      "smartComponent": "smartSQL",
+      "operation": "insert",
+      "table": "chat_history"
+    },
+    {
+      "name": "get-chat-history",
+      "description": "Retrieve chat history for a workspace",
+      "smartComponent": "smartSQL",
+      "operation": "select",
+      "table": "chat_history"
+    },
+    {
+      "name": "set-user-profile",
+      "description": "Store user profile in memory",
+      "smartComponent": "smartMemory",
+      "operation": "set",
+      "namespace": "user_profiles"
+    },
+    {
+      "name": "get-user-profile",
+      "description": "Retrieve user profile from memory",
+      "smartComponent": "smartMemory",
+      "operation": "get",
+      "namespace": "user_profiles"
+    },
+    {
+      "name": "set-session-data",
+      "description": "Store session data",
+      "smartComponent": "smartMemory",
+      "operation": "set",
+      "namespace": "session_data"
+    },
+    {
+      "name": "get-session-data",
+      "description": "Retrieve session data",
+      "smartComponent": "smartMemory",
+      "operation": "get",
+      "namespace": "session_data"
+    },
+    {
+      "name": "generate-ceo-analysis",
+      "description": "Generate CEO strategic analysis",
+      "smartComponent": "smartInference",
+      "model": "claude-opus-4-5"
+    },
+    {
+      "name": "generate-finance-analysis",
+      "description": "Generate financial analysis",
+      "smartComponent": "smartInference",
+      "model": "claude-sonnet-4-5"
+    },
+    {
+      "name": "generate-marketing-analysis",
+      "description": "Generate marketing analysis",
+      "smartComponent": "smartInference",
+      "model": "claude-sonnet-4-5"
+    },
+    {
+      "name": "generate-sales-analysis",
+      "description": "Generate sales strategy",
+      "smartComponent": "smartInference",
+      "model": "claude-sonnet-4-5"
+    },
+    {
+      "name": "generate-developer-analysis",
+      "description": "Generate technical architecture and code",
+      "smartComponent": "smartInference",
+      "model": "claude-sonnet-4-5"
+    },
+    {
+      "name": "chat-with-agent",
+      "description": "Interactive chat with AI agent",
+      "smartComponent": "smartInference",
+      "model": "claude-haiku-4-5"
+    }
+  ],
+
+  "api": {
+    "baseUrl": "/api/v1",
+    "cors": {
+      "enabled": true,
+      "origins": ["*"]
+    },
+    "rateLimit": {
+      "enabled": true,
+      "requests": 100,
+      "window": 900000
+    }
+  },
+
+  "logging": {
+    "level": "info",
+    "format": "json",
+    "destination": "stdout"
+  }
+}

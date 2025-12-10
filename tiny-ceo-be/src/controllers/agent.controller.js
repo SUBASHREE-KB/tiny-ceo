@@ -1,74 +1,107 @@
-const db = require('../config/database');
+const smartSQLService = require('../services/smartsql.service');
+const smartInferenceService = require('../services/smartinference.service');
+const smartMemoryService = require('../services/smartmemory.service');
 const analysisService = require('../services/analysis.service');
-const orchestratorService = require('../services/orchestrator.service');
-const { SUCCESS_MESSAGES, ERROR_MESSAGES, CONVERSATION_CONTEXT } = require('../config/constants');
+const { SUCCESS_MESSAGES, ERROR_MESSAGES } = require('../config/constants');
 const { AppError } = require('../middleware/errorHandler');
 const { logger } = require('../utils/logger');
 
 /**
- * Agent Controller
- * Handles agent generation and management
+ * Agent Controller - Updated for Raindrop MCP
+ * Handles agent generation using SmartInference
  */
 const agentController = {
   /**
-   * Generate insights from all agents
+   * Generate insights from all agents using SmartInference
    */
   generateAll: async (req, res, next) => {
     try {
       const { workspaceId } = req.params;
+      const userId = req.user?.userId || req.userId;
 
-      // Verify workspace ownership
-      const workspace = db.findWorkspaceById(workspaceId);
+      // Get workspace from SmartSQL
+      const workspace = await smartSQLService.getWorkspace(workspaceId);
       if (!workspace) {
         throw new AppError(ERROR_MESSAGES.WORKSPACE_NOT_FOUND, 404);
       }
-      if (workspace.user_id !== req.userId) {
+      if (workspace.user_id !== userId) {
         throw new AppError(ERROR_MESSAGES.UNAUTHORIZED, 403);
       }
 
-      // Get conversation
-      const conversation = db.findConversationByWorkspaceId(workspaceId);
-      if (!conversation || conversation.messages.length === 0) {
-        throw new AppError(ERROR_MESSAGES.NO_CONVERSATION, 400);
-      }
+      // Update workspace status
+      await smartSQLService.updateWorkspace(workspaceId, { status: 'analyzing' });
 
-      // Check conversation maturity
-      const maturity = analysisService.assessConversationMaturity(conversation.messages);
-      if (!maturity.isReady) {
-        logger.warn('Conversation not mature enough', { workspaceId, maturity });
-        throw new AppError(
-          `Conversation needs more details. ${maturity.recommendation}`,
-          400
-        );
-      }
+      // Build conversation analysis from workspace data
+      const conversationAnalysis = {
+        startupIdea: workspace.startup_idea,
+        industry: workspace.industry,
+        targetAudience: workspace.target_audience,
+        problem: workspace.startup_idea, // Simplified
+        solution: workspace.startup_idea,
+        uniqueValue: workspace.startup_idea
+      };
 
-      // Analyze conversation
-      logger.info('Analyzing conversation', { workspaceId });
-      const conversationAnalysis = analysisService.analyzeConversation(conversation.messages);
+      logger.info('Generating agent insights with SmartInference', { workspaceId });
 
-      // Generate insights from all agents
-      logger.info('Generating agent insights', { workspaceId });
-      const agentOutputs = await orchestratorService.generateAllInsights(conversationAnalysis);
+      // Generate insights from all agents in parallel
+      const [ceoOutput, financeOutput, marketingOutput, salesOutput, developerOutput] =
+        await Promise.all([
+          smartInferenceService.generateCEOAnalysis(conversationAnalysis),
+          smartInferenceService.generateFinanceAnalysis(conversationAnalysis),
+          smartInferenceService.generateMarketingAnalysis(conversationAnalysis),
+          smartInferenceService.generateSalesAnalysis(conversationAnalysis),
+          smartInferenceService.generateDeveloperAnalysis(conversationAnalysis)
+        ]);
 
-      // Clear existing outputs
-      db.clearAgentOutputsByWorkspaceId(workspaceId);
+      // Parse JSON responses
+      const agentOutputs = {
+        ceo: this.parseAgentOutput(ceoOutput.text),
+        finance: this.parseAgentOutput(financeOutput.text),
+        marketing: this.parseAgentOutput(marketingOutput.text),
+        sales: this.parseAgentOutput(salesOutput.text),
+        developer: this.parseAgentOutput(developerOutput.text)
+      };
 
-      // Store agent outputs
-      Object.entries(agentOutputs).forEach(([agentType, output]) => {
-        db.createAgentOutput({
-          workspace_id: parseInt(workspaceId),
-          agent_type: agentType,
-          output_data: output
-        });
+      // Generate overview based on other outputs
+      const overviewResponse = await smartInferenceService.generateOverview(
+        conversationAnalysis,
+        agentOutputs
+      );
+      agentOutputs.overview = this.parseAgentOutput(overviewResponse.text);
+
+      // Save all agent outputs to SmartSQL
+      await Promise.all(
+        Object.entries(agentOutputs).map(([agentType, output]) =>
+          smartSQLService.saveAgentOutput(workspaceId, agentType, output, {
+            generationTime: ceoOutput.generationTime, // Use first agent's time as reference
+            modelUsed: ceoOutput.model
+          })
+        )
+      );
+
+      // Update workspace status
+      await smartSQLService.updateWorkspace(workspaceId, { status: 'completed' });
+
+      // Invalidate cache
+      await smartMemoryService.invalidateWorkspaceCache(workspaceId);
+
+      // Update user stats
+      await smartMemoryService.updateUserProfile(userId, {
+        stats: {
+          analysesGenerated:
+            (await smartMemoryService.getUserProfile(userId))?.stats?.analysesGenerated + 1 || 1
+        }
       });
 
-      logger.success('Agents generated successfully', { workspaceId });
+      logger.success('Agents generated successfully with SmartInference', { workspaceId });
 
       res.json({
         message: SUCCESS_MESSAGES.AGENTS_GENERATED,
-        status: 'completed'
+        status: 'completed',
+        outputs: agentOutputs
       });
     } catch (error) {
+      logger.error('Failed to generate agent insights', error);
       next(error);
     }
   },
@@ -79,21 +112,33 @@ const agentController = {
   getOutputs: async (req, res, next) => {
     try {
       const { workspaceId } = req.params;
+      const userId = req.user?.userId || req.userId;
 
-      // Verify workspace ownership
-      const workspace = db.findWorkspaceById(workspaceId);
+      // Get workspace
+      const workspace = await smartSQLService.getWorkspace(workspaceId);
       if (!workspace) {
         throw new AppError(ERROR_MESSAGES.WORKSPACE_NOT_FOUND, 404);
       }
-      if (workspace.user_id !== req.userId) {
+      if (workspace.user_id !== userId) {
         throw new AppError(ERROR_MESSAGES.UNAUTHORIZED, 403);
       }
 
-      // Get agent outputs
-      const outputs = db.findAgentOutputsByWorkspaceId(workspaceId);
+      // Get latest agent outputs from SmartSQL
+      const result = await smartSQLService.getLatestAgentOutputs(workspaceId);
+      const outputs = {};
 
-      res.json({ outputs });
+      if (result.rows) {
+        result.rows.forEach(row => {
+          outputs[row.agent_type] = row.output_data;
+        });
+      }
+
+      res.json({
+        workspace,
+        outputs
+      });
     } catch (error) {
+      logger.error('Failed to get agent outputs', error);
       next(error);
     }
   },
@@ -104,50 +149,75 @@ const agentController = {
   regenerate: async (req, res, next) => {
     try {
       const { workspaceId, agentType } = req.params;
+      const userId = req.user?.userId || req.userId;
 
-      // Verify workspace ownership
-      const workspace = db.findWorkspaceById(workspaceId);
+      // Get workspace
+      const workspace = await smartSQLService.getWorkspace(workspaceId);
       if (!workspace) {
         throw new AppError(ERROR_MESSAGES.WORKSPACE_NOT_FOUND, 404);
       }
-      if (workspace.user_id !== req.userId) {
+      if (workspace.user_id !== userId) {
         throw new AppError(ERROR_MESSAGES.UNAUTHORIZED, 403);
       }
 
-      // Get conversation and analyze
-      const conversation = db.findConversationByWorkspaceId(workspaceId);
-      if (!conversation) {
-        throw new AppError(ERROR_MESSAGES.NO_CONVERSATION, 400);
+      // Build conversation analysis
+      const conversationAnalysis = {
+        startupIdea: workspace.startup_idea,
+        industry: workspace.industry,
+        targetAudience: workspace.target_audience,
+        problem: workspace.startup_idea,
+        solution: workspace.startup_idea,
+        uniqueValue: workspace.startup_idea
+      };
+
+      logger.info('Regenerating agent with SmartInference', { workspaceId, agentType });
+
+      // Generate based on agent type
+      let response;
+      switch (agentType) {
+        case 'ceo':
+          response = await smartInferenceService.generateCEOAnalysis(conversationAnalysis);
+          break;
+        case 'finance':
+          response = await smartInferenceService.generateFinanceAnalysis(conversationAnalysis);
+          break;
+        case 'marketing':
+          response = await smartInferenceService.generateMarketingAnalysis(conversationAnalysis);
+          break;
+        case 'sales':
+          response = await smartInferenceService.generateSalesAnalysis(conversationAnalysis);
+          break;
+        case 'developer':
+          response = await smartInferenceService.generateDeveloperAnalysis(conversationAnalysis);
+          break;
+        case 'overview':
+          // Get existing outputs for overview
+          const outputs = await smartSQLService.getLatestAgentOutputs(workspaceId);
+          const existingOutputs = {};
+          if (outputs.rows) {
+            outputs.rows.forEach(row => {
+              existingOutputs[row.agent_type] = row.output_data;
+            });
+          }
+          response = await smartInferenceService.generateOverview(
+            conversationAnalysis,
+            existingOutputs
+          );
+          break;
+        default:
+          throw new AppError(`Invalid agent type: ${agentType}`, 400);
       }
 
-      const conversationAnalysis = analysisService.analyzeConversation(conversation.messages);
+      const output = this.parseAgentOutput(response.text);
 
-      // Get existing outputs for overview agent
-      const existingOutputs = {};
-      const outputs = db.findAgentOutputsByWorkspaceId(workspaceId);
-      outputs.forEach(output => {
-        existingOutputs[output.agent_type] = output.output_data;
+      // Save to SmartSQL
+      await smartSQLService.saveAgentOutput(workspaceId, agentType, output, {
+        generationTime: response.generationTime,
+        modelUsed: response.model
       });
 
-      // Regenerate agent
-      logger.info('Regenerating agent', { workspaceId, agentType });
-      const output = await orchestratorService.regenerateAgent(
-        agentType,
-        conversationAnalysis,
-        existingOutputs
-      );
-
-      // Update or create agent output
-      const existingOutput = db.findAgentOutput(workspaceId, agentType);
-      if (existingOutput) {
-        db.updateAgentOutput(workspaceId, agentType, output);
-      } else {
-        db.createAgentOutput({
-          workspace_id: parseInt(workspaceId),
-          agent_type: agentType,
-          output_data: output
-        });
-      }
+      // Invalidate cache
+      await smartMemoryService.invalidateWorkspaceCache(workspaceId);
 
       logger.success('Agent regenerated', { workspaceId, agentType });
 
@@ -156,7 +226,28 @@ const agentController = {
         output
       });
     } catch (error) {
+      logger.error('Failed to regenerate agent', error);
       next(error);
+    }
+  },
+
+  /**
+   * Helper: Parse agent output from JSON string
+   */
+  parseAgentOutput(text) {
+    try {
+      // Remove markdown code blocks if present
+      let jsonText = text.trim();
+      if (jsonText.startsWith('```json')) {
+        jsonText = jsonText.replace(/```json\n?/g, '').replace(/```\n?$/g, '');
+      } else if (jsonText.startsWith('```')) {
+        jsonText = jsonText.replace(/```\n?/g, '');
+      }
+
+      return JSON.parse(jsonText);
+    } catch (error) {
+      logger.warn('Failed to parse agent output as JSON, returning as text', { error });
+      return { text: text };
     }
   }
 };
